@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文选题大数据检索系统</title>
+    <style>
+        :root { --primary: #1a73e8; --text-main: #202124; --text-secondary: #5f6368; --bg: #f8f9fa; }
+        body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--text-main); }
+        .container { max-width: 800px; margin: 40px auto; }
+
+        /* 搜索框设计 */
+        .search-section { position: sticky; top: 20px; z-index: 100; margin-bottom: 30px; }
+        .search-bar {
+            background: white; display: flex; align-items: center; padding: 5px 20px;
+            border-radius: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #dfe1e5;
+        }
+        input { flex: 1; border: none; padding: 12px; font-size: 18px; outline: none; }
+
+        /* 统计与状态 */
+        .status-bar { padding: 0 15px; margin-bottom: 15px; font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between; }
+
+        /* 结果列表 */
+        .results-list { display: grid; gap: 12px; }
+        .card {
+            background: white; padding: 18px 25px; border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-left: 4px solid #dadce0;
+            transition: 0.2s; animation: fadeIn 0.3s ease;
+        }
+        .card:hover { border-left-color: var(--primary); transform: translateX(5px); }
+        .card-title { font-size: 17px; font-weight: 500; margin-bottom: 8px; color: #1a0dab; }
+        .card-meta { font-size: 12px; color: var(--text-secondary); display: flex; gap: 15px; }
+        .year-badge { background: #e8f0fe; color: #1967d2; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+
+        mark { background: #fff59d; color: black; padding: 0 2px; }
+        .empty { text-align: center; padding: 80px; color: var(--text-secondary); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="font-size: 32px; margin-bottom: 10px;">论文选题检索系统</h1>
+        <p style="color: var(--text-secondary);">汉语言文学专业 2022 - 2026 届选题数据库</p>
+    </div>
+
+    <div class="search-section">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="🔍 输入关键词搜索（如：莫言、女性、叙事）..." autofocus>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <span id="loadStatus">正在同步数据库...</span>
+        <span id="resultCount"></span>
+    </div>
+
+    <div id="resultsList" class="results-list">
+        </div>
+</div>
+
+<script>
+    let database = [];
+
+    // 第一步：页面加载时从同目录读取 JSON 文件
+    async function initDatabase() {
+        const loadStatus = document.getElementById('loadStatus');
+        try {
+            const response = await fetch('database.json');
+            if (!response.ok) throw new Error('无法加载数据库文件');
+            database = await response.json();
+            loadStatus.innerText = `✅ 数据库同步成功，共收录 ${database.length} 条选题`;
+        } catch (err) {
+            loadStatus.innerHTML = `❌ 加载失败: 请确保 database.json 与此页面在同一文件夹`;
+            console.error(err);
+        }
+    }
+
+    // 第二步：监听输入实现实时搜索
+    const searchInput = document.getElementById('searchInput');
+    const resultsList = document.getElementById('resultsList');
+    const resultCount = document.getElementById('resultCount');
+
+    searchInput.addEventListener('input', () => {
+        const keyword = searchInput.value.trim().toLowerCase();
+
+        if (!keyword) {
+            resultsList.innerHTML = '<div class="empty">请输入关键词开始检索</div>';
+            resultCount.innerText = "";
+            return;
+        }
+
+        // 过滤数据：同时匹配题目(item[1])和年份(item[0])
+        const filtered = database.filter(item =>
+            item[1].toLowerCase().includes(keyword) || item[0].toLowerCase().includes(keyword)
+        );
+
+        renderResults(filtered, keyword);
+    });
+
+    // 第三步：渲染结果
+    function renderResults(data, keyword) {
+        resultCount.innerText = `找到 ${data.length} 条结果`;
+
+        if (data.length === 0) {
+            resultsList.innerHTML = '<div class="empty">未找到匹配的选题，请尝试其他关键词</div>';
+            return;
+        }
+
+        // 为了性能，如果结果超过 500 条，提示缩细范围
+        const displayData = data.slice(0, 500);
+
+        resultsList.innerHTML = displayData.map(item => {
+            const regex = new RegExp(`(${keyword})`, 'gi');
+            const highlightedTitle = item[1].replace(regex, '<mark>$1</mark>');
+            return `
+                <div class="card">
+                    <div class="card-title">${highlightedTitle}</div>
+                    <div class="meta">
+                        <span class="year-badge">${item[0]}</span>
+                        <span>汉语言文学专业</span>
+                    </div>
+                </div>
+            `;
+        }).join('') + (data.length > 500 ? '<p style="text-align:center; color:#999; padding:20px;">结果过多，仅显示前 500 条...</p>' : '');
+    }
+
+    // 初始化加载
+    initDatabase();
+</script>
+
+</body>
+</html>
