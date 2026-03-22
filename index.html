@@ -380,13 +380,13 @@
             </div>
             <div class="helper-row">
                 <span id="loadStatus">正在同步数据库...</span>
-                <span id="searchExplain">支持：标题直搜 / 文学作品关联搜 / 角色反查作品 / 分类筛选</span>
+                <span id="searchExplain">支持：标题直搜 / 《作品名》关联搜 / 角色反查作品 / 分类筛选</span>
             </div>
 
             <div class="works-section" style="margin-top:16px;">
                 <div class="section-title">
                     <h2>高频文学作品引用 Top 20</h2>
-                    <small>点击作品名可直接触发关联搜索</small>
+                    <small>仅统计文学作品名（优先识别《作品名》与角色归属）</small>
                 </div>
                 <div class="works-cloud" id="worksCloud"></div>
             </div>
@@ -413,7 +413,7 @@
             <div class="stat-card">
                 <div class="stat-title">去重作品数</div>
                 <div class="stat-value" id="statUniqueWorks">0</div>
-                <div class="stat-note">显式作品名 + 角色反推作品</div>
+                <div class="stat-note">《作品名》 + 角色反推作品</div>
             </div>
             <div class="stat-card">
                 <div class="stat-title">当前命中结果</div>
@@ -667,13 +667,17 @@ function displayMainCategory(type){
 function buildAliasToWorkMap(){
     const map = new Map();
     Object.entries(WORK_LEXICON).forEach(([work, aliases]) => {
-        [work, ...(aliases||[])].forEach(alias => {
+        [work, `《${work}》`, ...(aliases||[])].forEach(alias => {
             map.set(normalizeText(alias), work);
         });
     });
     return map;
 }
 const ALIAS_TO_WORK = buildAliasToWorkMap();
+
+function formatWorkTitle(work=''){
+    return work ? `《${work}》` : '';
+}
 
 function extractBracketWorks(title){
     const works = [];
@@ -686,12 +690,9 @@ function extractBracketWorks(title){
     }
     return works;
 }
-function inferWorksFromAliases(title){
+function inferWorksFromCharacters(title){
     const norm = normalizeText(title);
     const works = [];
-    for(const [aliasNorm, work] of ALIAS_TO_WORK.entries()){
-        if(aliasNorm && norm.includes(aliasNorm)) works.push(work);
-    }
     for(const [character, work] of Object.entries(CHARACTER_TO_WORK)){
         if(norm.includes(normalizeText(character))) works.push(work);
     }
@@ -731,7 +732,7 @@ function preprocessDatabase(rawData){
         const year = String(item[0] ?? '');
         const title = String(item[1] ?? '');
         const explicitWorks = extractBracketWorks(title);
-        const inferredWorks = inferWorksFromAliases(title);
+        const inferredWorks = inferWorksFromCharacters(title);
         const workRefs = unique([...explicitWorks, ...inferredWorks]);
         const mainCategory = detectMainCategory(title);
         const subcategory = detectSubcategory(title, mainCategory);
@@ -768,7 +769,7 @@ function buildSuggestions(query){
     const workSuggestions = workStats
         .filter(([work]) => normalizeText(work).includes(q))
         .slice(0, 6)
-        .map(([work, count]) => ({ label: work, extra: `${count} 条关联论文`, type: '文学作品' }));
+        .map(([work, count]) => ({ label: formatWorkTitle(work), extra: `${count} 条关联论文`, type: '文学作品' }));
 
     const subSuggestions = [];
     Object.values(SUBCATEGORY_RULES).flat().forEach(rule => {
@@ -910,13 +911,13 @@ function doSearch(){
         resultsList.innerHTML = '<div class="empty">请输入关键词后再检索。为保护数据库，未搜索时不显示任何论文题目。</div>';
         document.getElementById('statCurrentResults').textContent = '0';
         renderExpandedTerms([]);
-        searchExplain.textContent = '支持：标题直搜 / 文学作品关联搜 / 角色反查作品 / 分类筛选';
+        searchExplain.textContent = '支持：标题直搜 / 《作品名》关联搜 / 角色反查作品 / 分类筛选';
         return;
     }
 
     const expansion = expandQuery(keyword);
     lastExpandedTerms = unique([
-        ...expansion.expandedWorks.map(w => `作品：${w}`),
+        ...expansion.expandedWorks.map(w => `作品：${formatWorkTitle(w)}`),
         ...expansion.expandedCharacters.map(c => `角色：${c}`)
     ]);
 
@@ -956,7 +957,7 @@ function renderResults(data, keyword){
     resultsList.innerHTML = displayData.map(doc => {
         const highlightedTitle = markKeyword(doc.title, keyword);
         const workRefsHTML = doc.workRefs.length
-            ? `<div class="work-ref-list">${doc.workRefs.slice(0,5).map(w => `<span class="work-ref">关联作品：${escapeHTML(w)}</span>`).join('')}</div>`
+            ? `<div class="work-ref-list">${doc.workRefs.slice(0,5).map(w => `<span class="work-ref">关联作品：${escapeHTML(formatWorkTitle(w))}</span>`).join('')}</div>`
             : '';
 
         const snippet = buildSnippet(doc, keyword);
@@ -981,7 +982,7 @@ function renderResults(data, keyword){
 
 function buildSnippet(doc, keyword){
     const hints = [];
-    if(doc.workRefs.length) hints.push(`命中作品关联：${doc.workRefs.join('、')}`);
+    if(doc.workRefs.length) hints.push(`命中作品关联：${doc.workRefs.map(formatWorkTitle).join('、')}`);
     hints.push(`分类路径：${displayMainCategory(doc.mainCategory)} / ${doc.subcategory}`);
     if(keyword && normalizeText(doc.title).includes(normalizeText(keyword))){
         hints.push('命中方式：标题直接匹配');
@@ -1035,8 +1036,8 @@ function renderWorksCloud(topWorks){
         return;
     }
     worksCloud.innerHTML = topWorks.map(([work, count]) => `
-        <button class="work-chip" data-work="${escapeHTML(work)}">
-            <span>${escapeHTML(work)}</span>
+        <button class="work-chip" data-work="${escapeHTML(formatWorkTitle(work))}">
+            <span>${escapeHTML(formatWorkTitle(work))}</span>
             <span class="count">${count}</span>
         </button>
     `).join('');
