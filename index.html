@@ -3,49 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>汉语言文学选题分类检索系统</title>
+    <title>汉语言文学选题智搜 - 增强版</title>
     <style>
         :root { --primary: #1a73e8; --bg: #f8f9fa; --card-border: #dadce0; }
         body { font-family: "PingFang SC", sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #202124; }
         .container { max-width: 850px; margin: 20px auto; }
         
-        /* 标题区 */
-        .header { text-align: center; margin-bottom: 30px; }
+        .header { text-align: center; margin-bottom: 25px; }
         .header h1 { color: #1a73e8; margin-bottom: 5px; }
-        
-        /* 分类导航 */
-        .category-nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .cat-btn { 
-            padding: 8px 20px; border-radius: 20px; border: 1px solid #ddd; 
-            background: white; cursor: pointer; transition: 0.3s; font-weight: 500;
-        }
-        .cat-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(26,115,232,0.3); }
-        .cat-btn:hover:not(.active) { background: #eee; }
 
-        /* 搜索框 */
+        /* 新增：高频引用看板 */
+        .hot-section { 
+            background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px;
+            border: 1px solid #dfe1e5; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .hot-title { font-size: 14px; font-weight: bold; color: #5f6368; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+        .hot-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .hot-tag { 
+            font-size: 12px; background: #f1f3f4; color: #3c4043; padding: 4px 10px; 
+            border-radius: 6px; cursor: pointer; transition: 0.2s; border: 1px solid transparent;
+        }
+        .hot-tag:hover { background: #e8f0fe; color: var(--primary); border-color: #d2e3fc; }
+        .hot-tag b { color: var(--primary); margin-left: 4px; }
+        
+        /* 分类与搜索 */
+        .category-nav { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        .cat-btn { 
+            padding: 6px 16px; border-radius: 20px; border: 1px solid #ddd; 
+            background: white; cursor: pointer; transition: 0.3s; font-size: 14px;
+        }
+        .cat-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
         .search-section { position: sticky; top: 10px; z-index: 100; margin-bottom: 20px; }
         .search-bar { 
             background: white; display: flex; align-items: center; padding: 5px 20px; 
             border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #dfe1e5;
         }
-        input { flex: 1; border: none; padding: 12px; font-size: 18px; outline: none; }
+        input { flex: 1; border: none; padding: 12px; font-size: 16px; outline: none; }
         
-        /* 结果展示 */
-        .status-bar { padding: 0 15px; margin-bottom: 10px; font-size: 13px; color: #5f6368; display: flex; justify-content: space-between; }
-        .results-list { display: grid; gap: 12px; }
+        .status-bar { padding: 0 10px; margin-bottom: 10px; font-size: 13px; color: #5f6368; display: flex; justify-content: space-between; }
+        .results-list { display: grid; gap: 10px; }
         .card { 
-            background: white; padding: 18px; border-radius: 12px; border: 1px solid #efefef;
-            border-left: 5px solid #ccc; transition: 0.2s; animation: fadeIn 0.3s ease;
+            background: white; padding: 15px; border-radius: 10px; border: 1px solid #efefef;
+            border-left: 4px solid #dadce0; transition: 0.2s;
         }
-        .card:hover { border-left-color: var(--primary); transform: translateX(5px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .card-title { font-size: 16px; font-weight: 500; margin-bottom: 8px; color: #1a0dab; line-height: 1.4; }
-        .meta { font-size: 12px; color: #70757a; display: flex; align-items: center; gap: 10px; }
-        .year-badge { background: #e8f0fe; color: #1967d2; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
-        .type-tag { border: 1px solid #ddd; padding: 1px 6px; border-radius: 4px; color: #888; }
+        .card:hover { border-left-color: var(--primary); transform: translateX(4px); }
+        .card-title { font-size: 15px; font-weight: 500; margin-bottom: 6px; color: #1a0dab; }
+        .meta { font-size: 11px; color: #70757a; display: flex; gap: 10px; }
+        .year-badge { background: #e8f0fe; color: #1967d2; padding: 1px 6px; border-radius: 4px; }
         
-        mark { background: #fff59d; color: black; padding: 0 2px; }
-        .empty { text-align: center; padding: 60px; color: #999; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+        mark { background: #fff59d; color: black; padding: 0 1px; }
+        .empty { text-align: center; padding: 50px; color: #999; }
     </style>
 </head>
 <body>
@@ -53,25 +61,31 @@
 <div class="container">
     <div class="header">
         <h1>汉语言文学选题智搜</h1>
-        <p>集成 2934 条历届数据 · 智能分类检索</p>
-    </div>
-
-    <div class="category-nav" id="categoryNav">
-        <button class="cat-btn active" data-type="all">全部领域</button>
-        <button class="cat-btn" data-type="literature">文学类</button>
-        <button class="cat-btn" data-type="language">语言类</button>
-        <button class="cat-btn" data-type="education">教学类</button>
-        <button class="cat-btn" data-type="culture">文化类</button>
+        <p>集成历届数据 · 实时热点统计</p>
     </div>
 
     <div class="search-section">
         <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="在当前分类下搜索关键词..." autofocus>
+            <input type="text" id="searchInput" placeholder="搜索作家、作品或关键词..." autofocus>
         </div>
     </div>
 
+    <div class="hot-section" id="hotSection" style="display: none;">
+        <div class="hot-title">🔥 选题高频引用 Top 20 (书名/作者)</div>
+        <div class="hot-tags" id="hotTags">
+            </div>
+    </div>
+
+    <div class="category-nav" id="categoryNav">
+        <button class="cat-btn active" data-type="all">全部</button>
+        <button class="cat-btn" data-type="literature">文学</button>
+        <button class="cat-btn" data-type="language">语言</button>
+        <button class="cat-btn" data-type="education">教学</button>
+        <button class="cat-btn" data-type="culture">文化</button>
+    </div>
+
     <div class="status-bar">
-        <span id="loadStatus">正在同步数据库...</span>
+        <span id="loadStatus">正在同步数据...</span>
         <span id="resultCount"></span>
     </div>
 
@@ -82,97 +96,122 @@
     let database = [];
     let currentCategory = 'all';
 
-    // 智能分类关键词词库 (核心逻辑)
     const categoryRules = {
-        literature: /小说|散文|诗歌|意象|叙事|文本|形象|创作|莫言|鲁迅|余华|张爱玲|文学|艺术特征|悲剧/i,
-        language: /词汇|语法|方言|修辞|语义|语音|外来词|流行语|语言特点|句法|构词/i,
-        education: /教学|中学|小学|语文|课堂|教材|设计|策略|教育|学生|老师|部编本|阅读教学/i,
-        culture: /文化|民俗|传播|媒介|节庆|宗教|非物质文化遗产|社会学|价值|受众/i
+        literature: /小说|散文|诗歌|意象|叙事|文本|形象|创作|文学|艺术特征|悲剧/i,
+        language: /词汇|语法|方言|修辞|语义|语音|流行语|语言特点|句法|构词/i,
+        education: /教学|中学|小学|语文|课堂|教材|策略|教育|学生|老师|阅读教学/i,
+        culture: /文化|民俗|传播|媒介|节庆|宗教|社会学|价值|受众/i
     };
 
-    // 初始化加载
     async function initDatabase() {
-        const loadStatus = document.getElementById('loadStatus');
         try {
             const response = await fetch('database.json');
-            if (!response.ok) throw new Error('无法加载数据库文件');
+            if (!response.ok) throw new Error();
             database = await response.json();
-            loadStatus.innerText = `✅ 成功加载 2934 条选题`;
-            doSearch(); // 初始显示
+            document.getElementById('loadStatus').innerText = `✅ 共收录 ${database.length} 条选题`;
+            
+            // 执行统计逻辑
+            analyzeHotWorks();
+            doSearch();
         } catch (err) {
-            loadStatus.innerHTML = `❌ 加载失败，请检查文件名或刷新页面`;
+            document.getElementById('loadStatus').innerHTML = `❌ 数据同步失败`;
         }
     }
 
+    // --- 新增核心逻辑：统计高频作品/作者 ---
+    function analyzeHotWorks() {
+        const counts = {};
+        // 匹配逻辑：1. 提取《》中的书名 2. 提取常见高频名家
+        const bookRegex = /《([^》]+)》/g;
+        const authors = ["鲁迅", "张爱玲", "莫言", "余华", "萧红", "沈从文", "老舍", "曹雪芹", "苏轼", "李清照", "杜甫", "王维"];
+
+        database.forEach(item => {
+            const title = item[1];
+            
+            // 统计书名
+            let match;
+            while ((match = bookRegex.exec(title)) !== null) {
+                const book = match[1];
+                if (book.length > 1) counts[book] = (counts[book] || 0) + 1;
+            }
+            
+            // 统计名家
+            authors.forEach(name => {
+                if (title.includes(name)) counts[name] = (counts[name] || 0) + 1;
+            });
+        });
+
+        // 排序并取前20
+        const sorted = Object.entries(counts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 20);
+
+        const hotTags = document.getElementById('hotTags');
+        hotTags.innerHTML = sorted.map(([name, count]) => `
+            <div class="hot-tag" onclick="quickSearch('${name}')">
+                ${name}<b>${count}</b>
+            </div>
+        `).join('');
+        document.getElementById('hotSection').style.display = 'block';
+    }
+
+    // 点击热词快速搜索
+    window.quickSearch = (word) => {
+        searchInput.value = word;
+        doSearch();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // --- 原有逻辑 ---
     const searchInput = document.getElementById('searchInput');
     const resultsList = document.getElementById('resultsList');
     const categoryButtons = document.querySelectorAll('.cat-btn');
 
-    // 监听分类点击
     categoryButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             categoryButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentCategory = btn.dataset.type;
-            doSearch(); // 切换分类后重新检索
+            doSearch();
         });
     });
 
-    // 监听搜索输入
     searchInput.addEventListener('input', doSearch);
 
     function doSearch() {
         const keyword = searchInput.value.trim().toLowerCase();
-        
-        // 1. 过滤分类
         let filtered = database;
         if (currentCategory !== 'all') {
             filtered = database.filter(item => categoryRules[currentCategory].test(item[1]));
         }
-
-        // 2. 过滤关键词
         if (keyword) {
             filtered = filtered.filter(item => 
                 item[1].toLowerCase().includes(keyword) || item[0].includes(keyword)
             );
         }
-
         renderResults(filtered, keyword);
     }
 
     function renderResults(data, keyword) {
-        document.getElementById('resultCount').innerText = `当前分类下找到 ${data.length} 条`;
-        
+        document.getElementById('resultCount').innerText = `找到 ${data.length} 条`;
         if (data.length === 0) {
-            resultsList.innerHTML = '<div class="empty">此分类下暂无匹配结果，请尝试其他关键词</div>';
+            resultsList.innerHTML = '<div class="empty">未找到匹配选题</div>';
             return;
         }
-
-        const displayData = data.slice(0, 300); // 性能保护
+        const displayData = data.slice(0, 300);
         resultsList.innerHTML = displayData.map(item => {
             const highlightedTitle = keyword ? 
                 item[1].replace(new RegExp(`(${keyword})`, 'gi'), '<mark>$1</mark>') : item[1];
-            
             return `
                 <div class="card">
                     <div class="card-title">${highlightedTitle}</div>
                     <div class="meta">
                         <span class="year-badge">${item[0]}</span>
-                        <span class="type-tag">${getAutoType(item[1])}</span>
                         <span>汉语言文学专业</span>
                     </div>
                 </div>
             `;
-        }).join('') + (data.length > 300 ? '<p style="text-align:center; color:#999; font-size:12px;">结果过多，请增加搜索词以精确查找...</p>' : '');
-    }
-
-    // 用于卡片展示的自动标签识别
-    function getAutoType(title) {
-        if (categoryRules.literature.test(title)) return '文学';
-        if (categoryRules.language.test(title)) return '语言';
-        if (categoryRules.education.test(title)) return '教学';
-        if (categoryRules.culture.test(title)) return '文化';
-        return '其他';
+        }).join('');
     }
 
     initDatabase();
