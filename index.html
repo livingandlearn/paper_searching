@@ -3,37 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>汉语言文学选题智搜 - 增强版</title>
+    <title>汉语言文学选题智搜 - 关联检索版</title>
     <style>
-        :root { --primary: #1a73e8; --bg: #f8f9fa; --card-border: #dadce0; }
+        :root { --primary: #1a73e8; --bg: #f8f9fa; }
         body { font-family: "PingFang SC", sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #202124; }
         .container { max-width: 850px; margin: 20px auto; }
         
-        .header { text-align: center; margin-bottom: 25px; }
-        .header h1 { color: #1a73e8; margin-bottom: 5px; }
-
-        /* 新增：高频引用看板 */
-        .hot-section { 
-            background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px;
-            border: 1px solid #dfe1e5; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        }
-        .hot-title { font-size: 14px; font-weight: bold; color: #5f6368; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+        /* 统计与提示区 */
+        .hot-section { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #dfe1e5; }
+        .hot-title { font-size: 14px; font-weight: bold; color: #5f6368; margin-bottom: 10px; }
         .hot-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-        .hot-tag { 
-            font-size: 12px; background: #f1f3f4; color: #3c4043; padding: 4px 10px; 
-            border-radius: 6px; cursor: pointer; transition: 0.2s; border: 1px solid transparent;
-        }
-        .hot-tag:hover { background: #e8f0fe; color: var(--primary); border-color: #d2e3fc; }
-        .hot-tag b { color: var(--primary); margin-left: 4px; }
-        
-        /* 分类与搜索 */
-        .category-nav { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
-        .cat-btn { 
-            padding: 6px 16px; border-radius: 20px; border: 1px solid #ddd; 
-            background: white; cursor: pointer; transition: 0.3s; font-size: 14px;
-        }
-        .cat-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .hot-tag { font-size: 12px; background: #f1f3f4; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+        .hot-tag:hover { background: #e8f0fe; color: var(--primary); }
 
+        /* 关联提示 */
+        .relation-tip { 
+            background: #fff8e1; color: #f57f17; padding: 8px 15px; border-radius: 8px; 
+            margin-bottom: 15px; font-size: 13px; display: none; border: 1px solid #ffe082;
+        }
+
+        /* 搜索框与分类 */
         .search-section { position: sticky; top: 10px; z-index: 100; margin-bottom: 20px; }
         .search-bar { 
             background: white; display: flex; align-items: center; padding: 5px 20px; 
@@ -41,52 +30,44 @@
         }
         input { flex: 1; border: none; padding: 12px; font-size: 16px; outline: none; }
         
-        .status-bar { padding: 0 10px; margin-bottom: 10px; font-size: 13px; color: #5f6368; display: flex; justify-content: space-between; }
+        .category-nav { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; }
+        .cat-btn { padding: 6px 16px; border-radius: 20px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 14px; }
+        .cat-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
         .results-list { display: grid; gap: 10px; }
-        .card { 
-            background: white; padding: 15px; border-radius: 10px; border: 1px solid #efefef;
-            border-left: 4px solid #dadce0; transition: 0.2s;
-        }
-        .card:hover { border-left-color: var(--primary); transform: translateX(4px); }
-        .card-title { font-size: 15px; font-weight: 500; margin-bottom: 6px; color: #1a0dab; }
-        .meta { font-size: 11px; color: #70757a; display: flex; gap: 10px; }
-        .year-badge { background: #e8f0fe; color: #1967d2; padding: 1px 6px; border-radius: 4px; }
+        .card { background: white; padding: 15px; border-radius: 10px; border: 1px solid #efefef; border-left: 4px solid #dadce0; }
+        .card-title { font-size: 15px; font-weight: 500; color: #1a0dab; margin-bottom: 5px; }
+        .year-badge { background: #e8f0fe; color: #1967d2; padding: 1px 6px; border-radius: 4px; font-size: 11px; }
         
         mark { background: #fff59d; color: black; padding: 0 1px; }
-        .empty { text-align: center; padding: 50px; color: #999; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <h1>汉语言文学选题智搜</h1>
-        <p>集成历届数据 · 实时热点统计</p>
+    <div class="header" style="text-align: center; margin-bottom: 20px;">
+        <h1 style="color:var(--primary)">汉语言文学选题智搜</h1>
+        <p style="color:#666">支持作品-人物关联深度检索</p>
     </div>
 
     <div class="search-section">
         <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="搜索作家、作品或关键词..." autofocus>
+            <input type="text" id="searchInput" placeholder="搜索《红楼梦》会自动关联林黛玉、贾宝玉..." autofocus>
         </div>
     </div>
 
-    <div class="hot-section" id="hotSection" style="display: none;">
-        <div class="hot-title">🔥 选题高频引用 Top 20 (书名/作者)</div>
-        <div class="hot-tags" id="hotTags">
-            </div>
+    <div id="relationTip" class="relation-tip"></div>
+
+    <div class="hot-section">
+        <div class="hot-title">🔥 选题高频引用 Top 20</div>
+        <div class="hot-tags" id="hotTags"></div>
     </div>
 
-    <div class="category-nav" id="categoryNav">
+    <div class="category-nav">
         <button class="cat-btn active" data-type="all">全部</button>
         <button class="cat-btn" data-type="literature">文学</button>
         <button class="cat-btn" data-type="language">语言</button>
         <button class="cat-btn" data-type="education">教学</button>
-        <button class="cat-btn" data-type="culture">文化</button>
-    </div>
-
-    <div class="status-bar">
-        <span id="loadStatus">正在同步数据...</span>
-        <span id="resultCount"></span>
     </div>
 
     <div id="resultsList" class="results-list"></div>
@@ -96,123 +77,124 @@
     let database = [];
     let currentCategory = 'all';
 
-    const categoryRules = {
-        literature: /小说|散文|诗歌|意象|叙事|文本|形象|创作|文学|艺术特征|悲剧/i,
-        language: /词汇|语法|方言|修辞|语义|语音|流行语|语言特点|句法|构词/i,
-        education: /教学|中学|小学|语文|课堂|教材|策略|教育|学生|老师|阅读教学/i,
-        culture: /文化|民俗|传播|媒介|节庆|宗教|社会学|价值|受众/i
+    // 1. 核心优化：作品-人物关联映射表 (可根据需要持续扩充)
+    const relationMap = {
+        "红楼梦": ["林黛玉", "贾宝玉", "薛宝钗", "王熙凤", "刘姥姥", "大观园"],
+        "西游记": ["孙悟空", "唐僧", "猪八戒", "沙和尚", "六小龄童"],
+        "水浒传": ["宋江", "林冲", "武松", "鲁智深", "潘金莲", "李逵"],
+        "三国演义": ["诸葛亮", "曹操", "刘备", "关羽", "张飞", "周瑜"],
+        "金瓶梅": ["西门庆", "潘金莲", "李瓶儿", "庞春梅"],
+        "雷雨": ["周朴园", "繁漪", "周萍", "鲁侍萍"],
+        "骆驼祥子": ["祥子", "虎妞"],
+        "阿Q正传": ["阿Q", "赵太爷"],
+        "围城": ["方鸿渐", "孙柔嘉", "苏文纨"],
+        "平凡的世界": ["孙少安", "孙少平", "田润叶"],
+        "半生缘": ["沈世钧", "顾曼桢", "顾曼璐"],
+        "边城": ["翠翠", "傩送", "天保"]
     };
 
     async function initDatabase() {
         try {
             const response = await fetch('database.json');
-            if (!response.ok) throw new Error();
             database = await response.json();
-            document.getElementById('loadStatus').innerText = `✅ 共收录 ${database.length} 条选题`;
-            
-            // 执行统计逻辑
             analyzeHotWorks();
             doSearch();
-        } catch (err) {
-            document.getElementById('loadStatus').innerHTML = `❌ 数据同步失败`;
-        }
+        } catch (err) { console.error("加载失败"); }
     }
 
-    // --- 新增核心逻辑：统计高频作品/作者 ---
-    function analyzeHotWorks() {
-        const counts = {};
-        // 匹配逻辑：1. 提取《》中的书名 2. 提取常见高频名家
-        const bookRegex = /《([^》]+)》/g;
-        const authors = ["鲁迅", "张爱玲", "莫言", "余华", "萧红", "沈从文", "老舍", "曹雪芹", "苏轼", "李清照", "杜甫", "王维"];
-
-        database.forEach(item => {
-            const title = item[1];
-            
-            // 统计书名
-            let match;
-            while ((match = bookRegex.exec(title)) !== null) {
-                const book = match[1];
-                if (book.length > 1) counts[book] = (counts[book] || 0) + 1;
-            }
-            
-            // 统计名家
-            authors.forEach(name => {
-                if (title.includes(name)) counts[name] = (counts[name] || 0) + 1;
-            });
-        });
-
-        // 排序并取前20
-        const sorted = Object.entries(counts)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 20);
-
-        const hotTags = document.getElementById('hotTags');
-        hotTags.innerHTML = sorted.map(([name, count]) => `
-            <div class="hot-tag" onclick="quickSearch('${name}')">
-                ${name}<b>${count}</b>
-            </div>
-        `).join('');
-        document.getElementById('hotSection').style.display = 'block';
-    }
-
-    // 点击热词快速搜索
-    window.quickSearch = (word) => {
-        searchInput.value = word;
-        doSearch();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    // --- 原有逻辑 ---
-    const searchInput = document.getElementById('searchInput');
-    const resultsList = document.getElementById('resultsList');
-    const categoryButtons = document.querySelectorAll('.cat-btn');
-
-    categoryButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            categoryButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentCategory = btn.dataset.type;
-            doSearch();
-        });
-    });
-
-    searchInput.addEventListener('input', doSearch);
-
+    // 2. 增强搜索函数：关联检索逻辑
     function doSearch() {
-        const keyword = searchInput.value.trim().toLowerCase();
-        let filtered = database;
-        if (currentCategory !== 'all') {
-            filtered = database.filter(item => categoryRules[currentCategory].test(item[1]));
+        const inputRaw = document.getElementById('searchInput').value.trim();
+        const keyword = inputRaw.toLowerCase();
+        const tipEl = document.getElementById('relationTip');
+        tipEl.style.display = 'none';
+
+        if (!keyword) {
+            renderResults(database.slice(0, 50), "");
+            return;
         }
-        if (keyword) {
-            filtered = filtered.filter(item => 
-                item[1].toLowerCase().includes(keyword) || item[0].includes(keyword)
-            );
+
+        // 查找关联词
+        let searchTerms = [keyword];
+        let matchedWork = "";
+
+        // 情况A：搜作品名，关联角色
+        for (let work in relationMap) {
+            if (keyword.includes(work)) {
+                searchTerms = searchTerms.concat(relationMap[work].map(v => v.toLowerCase()));
+                matchedWork = work;
+                tipEl.innerText = `💡 已自动关联《${work}》中的核心人物：${relationMap[work].join('、')}`;
+                tipEl.style.display = 'block';
+                break;
+            }
         }
+
+        // 情况B：搜角色名，关联作品
+        if (!matchedWork) {
+            for (let work in relationMap) {
+                if (relationMap[work].some(role => keyword.includes(role.toLowerCase()))) {
+                    searchTerms.push(work.toLowerCase());
+                    tipEl.innerText = `💡 检测到人物角色，已自动关联所属作品：《${work}》`;
+                    tipEl.style.display = 'block';
+                    break;
+                }
+            }
+        }
+
+        // 执行多关键词过滤
+        const filtered = database.filter(item => {
+            const title = item[1].toLowerCase();
+            const year = item[0].toLowerCase();
+            return searchTerms.some(term => title.includes(term) || year.includes(term));
+        });
+
         renderResults(filtered, keyword);
     }
 
-    function renderResults(data, keyword) {
-        document.getElementById('resultCount').innerText = `找到 ${data.length} 条`;
-        if (data.length === 0) {
-            resultsList.innerHTML = '<div class="empty">未找到匹配选题</div>';
-            return;
-        }
-        const displayData = data.slice(0, 300);
-        resultsList.innerHTML = displayData.map(item => {
-            const highlightedTitle = keyword ? 
-                item[1].replace(new RegExp(`(${keyword})`, 'gi'), '<mark>$1</mark>') : item[1];
-            return `
-                <div class="card">
-                    <div class="card-title">${highlightedTitle}</div>
-                    <div class="meta">
-                        <span class="year-badge">${item[0]}</span>
-                        <span>汉语言文学专业</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
+    // 3. 高频词统计逻辑
+    function analyzeHotWorks() {
+        const counts = {};
+        const bookRegex = /《([^》]+)》/g;
+        database.forEach(item => {
+            let match;
+            while ((match = bookRegex.exec(item[1])) !== null) {
+                const b = match[1]; if(b.length > 1) counts[b] = (counts[b] || 0) + 1;
+            }
+        });
+        const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0, 20);
+        document.getElementById('hotTags').innerHTML = sorted.map(([n, c]) => 
+            `<div class="hot-tag" onclick="quickSearch('${n}')">${n}<b>${c}</b></div>`).join('');
     }
+
+    function quickSearch(word) {
+        document.getElementById('searchInput').value = word;
+        doSearch();
+    }
+
+    function renderResults(data, keyword) {
+        const list = document.getElementById('resultsList');
+        if (data.length === 0) { list.innerHTML = '<div style="text-align:center;color:#999;padding:40px;">未找到匹配选题</div>'; return; }
+        
+        list.innerHTML = data.slice(0, 300).map(item => `
+            <div class="card">
+                <div class="card-title">${keyword ? item[1].replace(new RegExp(`(${keyword})`, 'gi'), '<mark>$1</mark>') : item[1]}</div>
+                <div style="font-size:12px;color:#888">
+                    <span class="year-badge">${item[0]}</span> · 汉语言文学
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // 绑定事件
+    document.getElementById('searchInput').addEventListener('input', doSearch);
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentCategory = this.dataset.type;
+            doSearch();
+        });
+    });
 
     initDatabase();
 </script>
