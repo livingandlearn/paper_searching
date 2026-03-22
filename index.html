@@ -330,11 +330,75 @@
             font-size:12px;
             text-align:center;
         }
+        .mindmap-section{margin-bottom:14px;}
+        .graph-toolbar{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            margin-bottom:14px;
+        }
+        .graph-grid{
+            display:grid;
+            grid-template-columns:320px 1fr;
+            gap:14px;
+            align-items:start;
+        }
+        .graph-stage{
+            position:relative;
+            min-height:560px;
+            overflow:hidden;
+            background:
+                radial-gradient(circle at top left, rgba(26,115,232,.08), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(37,99,235,.06), transparent 28%),
+                #fbfdff;
+        }
+        #mindMapSvg{width:100%;height:560px;display:block;}
+        .graph-empty{
+            position:absolute;inset:0;
+            display:flex;align-items:center;justify-content:center;
+            color:#94a3b8;font-size:14px;
+            background:rgba(255,255,255,.88);
+            text-align:center;padding:20px;
+        }
+        .graph-meta{
+            display:grid;gap:10px;
+            font-size:13px;color:#475569;
+        }
+        .insight-block{
+            border:1px solid var(--border);
+            border-radius:14px;
+            padding:12px;
+            background:#fff;
+        }
+        .insight-block h4{margin:0 0 10px;font-size:14px;color:#0f172a;}
+        .summary-list,.pair-list,.legend-list{display:grid;gap:8px;}
+        .summary-item,.pair-item,.legend-item{
+            display:flex;justify-content:space-between;gap:10px;align-items:flex-start;
+        }
+        .summary-item small,.pair-item small,.legend-item small{color:#64748b;}
+        .legend-dot{
+            display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;flex:none;
+        }
+        .graph-caption{font-size:12px;color:#64748b;line-height:1.7;}
+        .graph-node-label{
+            font-size:12px;
+            fill:#0f172a;
+            pointer-events:none;
+            font-weight:600;
+        }
+        .graph-edge{stroke:#cbd5e1;stroke-opacity:.65;}
+        .graph-edge.struct{stroke:#93c5fd;stroke-opacity:.75;}
+        .graph-node{cursor:pointer;transition:.2s ease;}
+        .graph-node circle{stroke:#fff;stroke-width:2px;}
+        .graph-node:hover circle{stroke:#0f172a;stroke-width:2.5px;}
+        .graph-faded{opacity:.18;}
+        .graph-muted{opacity:.32;}
         .hidden{display:none!important;}
 
         @media (max-width: 960px){
             .analytics-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
             .analysis-grid{grid-template-columns:1fr;}
+            .graph-grid{grid-template-columns:1fr;}
         }
         @media (max-width: 640px){
             body{padding:14px;}
@@ -434,6 +498,50 @@
             <div class="mini-panel">
                 <h3>年份分布 Top 10</h3>
                 <div class="year-chart" id="yearStats"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mindmap-section panel section-card">
+        <div class="section-title">
+            <h2>关键词思维图谱</h2>
+            <small>基于题目关键词共现 + 作品/角色/子类归属自动生成，可点击节点联动检索</small>
+        </div>
+
+        <div class="graph-toolbar" id="graphModeBar">
+            <button class="chip active" data-graph-mode="global">全库总览</button>
+            <button class="chip" data-graph-mode="facet">当前分类/子类</button>
+            <button class="chip" data-graph-mode="search">当前检索结果</button>
+        </div>
+
+        <div class="graph-grid">
+            <div class="graph-meta">
+                <div class="insight-block">
+                    <h4>图谱摘要</h4>
+                    <div class="summary-list" id="graphSummary"></div>
+                </div>
+                <div class="insight-block">
+                    <h4>最强关联</h4>
+                    <div class="pair-list" id="graphPairs"></div>
+                </div>
+                <div class="insight-block">
+                    <h4>图例说明</h4>
+                    <div class="legend-list">
+                        <div class="legend-item"><span><span class="legend-dot" style="background:#2563eb"></span>文学作品</span><small>《红楼梦》</small></div>
+                        <div class="legend-item"><span><span class="legend-dot" style="background:#8b5cf6"></span>人物角色</span><small>林黛玉</small></div>
+                        <div class="legend-item"><span><span class="legend-dot" style="background:#0f766e"></span>研究关键词</span><small>女性意识 / 叙事策略</small></div>
+                        <div class="legend-item"><span><span class="legend-dot" style="background:#f59e0b"></span>二级分类</span><small>现当代文学 / 语文教学</small></div>
+                        <div class="legend-item"><span><span class="legend-dot" style="background:#ef4444"></span>一级分类</span><small>文学 / 语言 / 教学 / 文化</small></div>
+                    </div>
+                    <div class="graph-caption" style="margin-top:10px;">
+                        连线越粗，表示在同一论文题目中共现或归属的次数越多。搜索后会自动高亮相关节点及其邻接关系。
+                    </div>
+                </div>
+            </div>
+
+            <div class="mini-panel graph-stage">
+                <svg id="mindMapSvg" viewBox="0 0 800 560" preserveAspectRatio="xMidYMid meet"></svg>
+                <div class="graph-empty hidden" id="graphEmpty">当前样本过少，暂时无法生成稳定图谱。</div>
             </div>
         </div>
     </div>
@@ -590,6 +698,9 @@ let currentCategory = 'all';
 let currentSubcategory = 'all';
 let lastExpandedTerms = [];
 let debounceTimer = null;
+let keywordStats = [];
+let graphMode = 'global';
+let latestSearchDocs = [];
 
 /* ========== DOM ========== */
 const searchInput = document.getElementById('searchInput');
@@ -605,6 +716,11 @@ const activeCategoryBadge = document.getElementById('activeCategoryBadge');
 const activeSubcategoryBadge = document.getElementById('activeSubcategoryBadge');
 const expandedTermsWrap = document.getElementById('expandedTermsWrap');
 const clearBtn = document.getElementById('clearBtn');
+const mindMapSvg = document.getElementById('mindMapSvg');
+const graphEmpty = document.getElementById('graphEmpty');
+const graphSummary = document.getElementById('graphSummary');
+const graphPairs = document.getElementById('graphPairs');
+const graphModeButtons = document.querySelectorAll('[data-graph-mode]');
 
 const categoryButtons = document.querySelectorAll('.cat-btn');
 
@@ -661,6 +777,10 @@ function displayMainCategory(type){
     })[type] || '其他';
 }
 
+const KEYWORD_STOPWORDS = new Set([
+    '研究','分析','探析','浅析','试论','论析','刍议','初探','简析','探究','综述','述评','思考','反思','比较','影响','启示','路径','问题','策略','建构','应用','意义','价值','接受','视角','视域','下','中的','之','的','与','和','及','对','以','从','论','新探','再探','审美','文本','书写','叙事','叙事学','形象','人物','人物形象','艺术','艺术特征','文学','文化','语言','教学','语文','汉语','课堂','教材','学生','教师','作品','作家','小说','散文','诗歌','戏剧','传播','表达','主题','母题','比较研究','探讨','阐释','解读','辨析','评析','考察','观照','维度','机制','方法','模式','路径研究','策略研究','应用研究','教学研究'
+]);
+
 /* =========================
    作品别名与角色索引
 ========================= */
@@ -698,6 +818,14 @@ function inferWorksFromCharacters(title){
     }
     return unique(works);
 }
+function inferCharactersFromTitle(title){
+    const norm = normalizeText(title);
+    const chars = [];
+    for(const character of Object.keys(CHARACTER_TO_WORK)){
+        if(norm.includes(normalizeText(character))) chars.push(character);
+    }
+    return unique(chars);
+}
 
 /* =========================
    分类识别
@@ -713,6 +841,90 @@ function detectSubcategory(title, mainCategory){
     if(!SUBCATEGORY_RULES[mainCategory]) return '未细分';
     const matched = SUBCATEGORY_RULES[mainCategory].find(rule => rule.regex.test(title));
     return matched ? matched.name : '未细分';
+}
+
+/* =========================
+   关键词抽取（轻量级本地统计版）
+========================= */
+function cleanTitleForKeywordMining(title=''){
+    return String(title)
+        .replace(/《[^》]+》/g, ' ')
+        .replace(/[A-Za-z]+/g, ' ')
+        .replace(/[0-9]+/g, ' ')
+        .replace(/[“”"‘’'`]/g, ' ')
+        .replace(/[\-—_/，。,．；;：:、！？!?（）()【】\[\]{}<>《》]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function generateChineseNgrams(text=''){
+    const seqs = cleanTitleForKeywordMining(text).match(/[一-龥]{2,}/g) || [];
+    const terms = [];
+    seqs.forEach(seq => {
+        for(let len = 2; len <= Math.min(4, seq.length); len++){
+            for(let i = 0; i <= seq.length - len; i++){
+                terms.push(seq.slice(i, i + len));
+            }
+        }
+    });
+    return unique(terms);
+}
+
+function isBadKeywordCandidate(term=''){
+    if(!term || term.length < 2 || term.length > 4) return true;
+    if(KEYWORD_STOPWORDS.has(term)) return true;
+    if(/^[的了和与及在从对以内向将把被于之其若则并也都很再更最各个一种一些]/.test(term)) return true;
+    if(/[的了和与及在从对以内向将把被于之其]/.test(term[term.length - 1])) return true;
+    if(ALIAS_TO_WORK.has(normalizeText(term))) return true;
+    if(CHARACTER_TO_WORK[term]) return true;
+    if(Object.values(SUBCATEGORY_RULES).flat().some(rule => rule.name === term)) return true;
+    return false;
+}
+
+function computeKeywordUniverse(docs){
+    const docCandidateTerms = [];
+    const docFreq = new Map();
+
+    docs.forEach(doc => {
+        const candidates = generateChineseNgrams(doc.title)
+            .filter(term => !isBadKeywordCandidate(term));
+        docCandidateTerms.push(candidates);
+        candidates.forEach(term => docFreq.set(term, (docFreq.get(term) || 0) + 1));
+    });
+
+    const selected = [...docFreq.entries()]
+        .filter(([, count]) => count >= 4)
+        .sort((a, b) => (b[1] * b[0].length) - (a[1] * a[0].length) || b[1] - a[1] || b[0].length - a[0].length);
+
+    const finalTerms = [];
+    for(const [term, count] of selected){
+        const overlapped = finalTerms.some(([picked, pickedCount]) =>
+            (picked.includes(term) || term.includes(picked)) && (Math.min(pickedCount, count) / Math.max(pickedCount, count) > 0.68)
+        );
+        if(overlapped) continue;
+        finalTerms.push([term, count]);
+        if(finalTerms.length >= 140) break;
+    }
+
+    const keywordSet = new Set(finalTerms.map(([term]) => term));
+
+    docs.forEach((doc, idx) => {
+        const ranked = docCandidateTerms[idx]
+            .filter(term => keywordSet.has(term))
+            .sort((a, b) => b.length - a.length || (docFreq.get(b) || 0) - (docFreq.get(a) || 0));
+
+        const finalDocKeywords = [];
+        ranked.forEach(term => {
+            if(finalDocKeywords.length >= 6) return;
+            if(!finalDocKeywords.some(picked => picked.includes(term) || term.includes(picked))){
+                finalDocKeywords.push(term);
+            }
+        });
+
+        doc.keywords = finalDocKeywords;
+    });
+
+    return finalTerms;
 }
 
 /* =========================
@@ -733,6 +945,7 @@ function preprocessDatabase(rawData){
         const title = String(item[1] ?? '');
         const explicitWorks = extractBracketWorks(title);
         const inferredWorks = inferWorksFromCharacters(title);
+        const characters = inferCharactersFromTitle(title);
         const workRefs = unique([...explicitWorks, ...inferredWorks]);
         const mainCategory = detectMainCategory(title);
         const subcategory = detectSubcategory(title, mainCategory);
@@ -746,6 +959,8 @@ function preprocessDatabase(rawData){
             mainCategory,
             subcategory,
             workRefs,
+            characters,
+            keywords: [],
             tokens: tokenizeForSuggest(title)
         };
     });
@@ -907,11 +1122,13 @@ function doSearch(){
     // 未搜索时不展示任何论文题目
     if(!normalizedKeyword){
         lastExpandedTerms = [];
+        latestSearchDocs = [];
         updateStatus(0, false);
         resultsList.innerHTML = '<div class="empty">请输入关键词后再检索。为保护数据库，未搜索时不显示任何论文题目。</div>';
         document.getElementById('statCurrentResults').textContent = '0';
         renderExpandedTerms([]);
         searchExplain.textContent = '支持：标题直搜 / 《作品名》关联搜 / 角色反查作品 / 分类筛选';
+        renderMindMap();
         return;
     }
 
@@ -928,7 +1145,8 @@ function doSearch(){
         .filter(item => item.score > 0)
         .sort((a,b) => b.score - a.score);
 
-    renderResults(scored.map(x => x.doc), keyword, expansion);
+    latestSearchDocs = scored.map(x => x.doc);
+    renderResults(latestSearchDocs, keyword, expansion);
     updateStatus(scored.length, true);
     renderExpandedTerms(lastExpandedTerms);
     document.getElementById('statCurrentResults').textContent = String(scored.length);
@@ -936,6 +1154,7 @@ function doSearch(){
     searchExplain.textContent = lastExpandedTerms.length
         ? `已启用关联扩展：${lastExpandedTerms.join(' / ')}`
         : '当前为普通标题检索';
+    renderMindMap();
 }
 
 function renderExpandedTerms(items){
@@ -1091,6 +1310,333 @@ function renderYearChart(items){
     `).join('');
 }
 
+function labelNode(type, label){
+    return `${type}:${label}`;
+}
+function humanNodeLabel(node){
+    return node.type === 'work' ? formatWorkTitle(node.label) : node.label;
+}
+function shortLabel(text='', maxLen=10){
+    return text.length > maxLen ? `${text.slice(0, maxLen)}…` : text;
+}
+function addWeightedEdge(edgeMap, source, target, weight=1, kind='co'){
+    if(!source || !target || source === target) return;
+    const key = source < target ? `${source}|||${target}` : `${target}|||${source}`;
+    const prev = edgeMap.get(key);
+    if(prev){
+        prev.weight += weight;
+        if(prev.kind !== 'struct') prev.kind = kind;
+    }else{
+        edgeMap.set(key, { source, target, weight, kind });
+    }
+}
+function topNamesFromMap(map, limit=10, minCount=1){
+    return sortCountMap(map).filter(([, count]) => count >= minCount).slice(0, limit).map(([name]) => name);
+}
+function getDocsForGraph(){
+    if(graphMode === 'search'){
+        return latestSearchDocs.length ? latestSearchDocs : filterDocsByFacet(processedDocs);
+    }
+    if(graphMode === 'facet'){
+        return filterDocsByFacet(processedDocs);
+    }
+    return processedDocs;
+}
+function buildMindGraph(docs){
+    const mainCount = new Map();
+    const subCount = new Map();
+    const workCount = new Map();
+    const charCount = new Map();
+    const keywordCount = new Map();
+
+    docs.forEach(doc => {
+        const main = displayMainCategory(doc.mainCategory);
+        mainCount.set(main, (mainCount.get(main) || 0) + 1);
+        subCount.set(doc.subcategory, (subCount.get(doc.subcategory) || 0) + 1);
+        doc.workRefs.forEach(work => workCount.set(work, (workCount.get(work) || 0) + 1));
+        doc.characters.forEach(char => charCount.set(char, (charCount.get(char) || 0) + 1));
+        doc.keywords.forEach(kw => keywordCount.set(kw, (keywordCount.get(kw) || 0) + 1));
+    });
+
+    const selectedMain = topNamesFromMap(mainCount, currentCategory === 'all' ? 4 : 2, 1);
+    const selectedSub = topNamesFromMap(subCount, docs.length > 120 ? 10 : 8, 1);
+    const selectedWorks = topNamesFromMap(workCount, docs.length > 120 ? 12 : 8, 2);
+    const selectedChars = topNamesFromMap(charCount, docs.length > 120 ? 10 : 8, 2);
+    const selectedKeywords = topNamesFromMap(keywordCount, docs.length > 120 ? 16 : 12, 2);
+
+    const mainSet = new Set(selectedMain);
+    const subSet = new Set(selectedSub);
+    const workSet = new Set(selectedWorks);
+    const charSet = new Set(selectedChars);
+    const keywordSet = new Set(selectedKeywords);
+
+    const nodes = [];
+    const nodeMap = new Map();
+    function pushNode(type, label, count){
+        const id = labelNode(type, label);
+        if(nodeMap.has(id)) return;
+        const typeOrder = { main:0, sub:1, work:2, char:3, kw:4 };
+        const sizeBase = { main:18, sub:15, work:17, char:14, kw:13 }[type] || 12;
+        const radius = Math.max(11, Math.min(28, sizeBase + Math.sqrt(count || 1) * 1.8));
+        const node = { id, type, label, count, radius, order:typeOrder[type] ?? 9 };
+        nodeMap.set(id, node);
+        nodes.push(node);
+    }
+
+    selectedMain.forEach(name => pushNode('main', name, mainCount.get(name) || 1));
+    selectedSub.forEach(name => pushNode('sub', name, subCount.get(name) || 1));
+    selectedWorks.forEach(name => pushNode('work', name, workCount.get(name) || 1));
+    selectedChars.forEach(name => pushNode('char', name, charCount.get(name) || 1));
+    selectedKeywords.forEach(name => pushNode('kw', name, keywordCount.get(name) || 1));
+
+    const edgeMap = new Map();
+    docs.forEach(doc => {
+        const main = displayMainCategory(doc.mainCategory);
+        const sub = doc.subcategory;
+        const works = doc.workRefs.filter(work => workSet.has(work));
+        const chars = doc.characters.filter(char => charSet.has(char));
+        const kws = doc.keywords.filter(kw => keywordSet.has(kw));
+
+        if(mainSet.has(main) && subSet.has(sub)){
+            addWeightedEdge(edgeMap, labelNode('main', main), labelNode('sub', sub), 1.8, 'struct');
+        }
+        works.forEach(work => {
+            if(subSet.has(sub)) addWeightedEdge(edgeMap, labelNode('sub', sub), labelNode('work', work), 1.5, 'struct');
+        });
+        chars.forEach(char => {
+            const work = CHARACTER_TO_WORK[char];
+            if(workSet.has(work)) addWeightedEdge(edgeMap, labelNode('work', work), labelNode('char', char), 2.2, 'struct');
+            if(subSet.has(sub)) addWeightedEdge(edgeMap, labelNode('sub', sub), labelNode('char', char), 0.8, 'co');
+        });
+        kws.forEach(kw => {
+            if(subSet.has(sub)) addWeightedEdge(edgeMap, labelNode('kw', kw), labelNode('sub', sub), 1.0, 'co');
+            works.forEach(work => addWeightedEdge(edgeMap, labelNode('kw', kw), labelNode('work', work), 1.35, 'co'));
+            chars.forEach(char => addWeightedEdge(edgeMap, labelNode('kw', kw), labelNode('char', char), 0.9, 'co'));
+        });
+        for(let i = 0; i < kws.length; i++){
+            for(let j = i + 1; j < kws.length; j++){
+                addWeightedEdge(edgeMap, labelNode('kw', kws[i]), labelNode('kw', kws[j]), 1.0, 'co');
+            }
+        }
+    });
+
+    const structuralEdges = [...edgeMap.values()].filter(edge => edge.kind === 'struct').sort((a,b) => b.weight - a.weight).slice(0, 48);
+    const coEdges = [...edgeMap.values()].filter(edge => edge.kind !== 'struct').sort((a,b) => b.weight - a.weight).slice(0, 60);
+    const keptMap = new Map();
+    [...structuralEdges, ...coEdges].forEach(edge => keptMap.set(`${edge.source}|${edge.target}`, edge));
+    const edges = [...keptMap.values()].sort((a,b) => b.weight - a.weight);
+
+    const usedNodes = new Set();
+    edges.forEach(edge => { usedNodes.add(edge.source); usedNodes.add(edge.target); });
+    const finalNodes = nodes.filter(node => usedNodes.has(node.id)).sort((a,b) => a.order - b.order || b.count - a.count);
+
+    return {
+        nodes: finalNodes,
+        edges,
+        counts: {
+            docs: docs.length,
+            works: selectedWorks.length,
+            chars: selectedChars.length,
+            keywords: selectedKeywords.length,
+            subcats: selectedSub.length
+        }
+    };
+}
+function computeGraphLayout(nodes, edges, width=800, height=560){
+    const nodesByType = { main:[], sub:[], work:[], char:[], kw:[] };
+    nodes.forEach(node => (nodesByType[node.type] || (nodesByType[node.type] = [])).push(node));
+
+    function assignAnchors(list, type){
+        const count = list.length || 1;
+        list.forEach((node, idx) => {
+            let x = width / 2;
+            let y = height / 2;
+            if(type === 'main'){
+                x = width * (0.18 + (idx + 1) / (count + 1) * 0.64);
+                y = 70;
+            }else if(type === 'sub'){
+                x = width * 0.2;
+                y = 120 + (idx + 1) / (count + 1) * (height - 200);
+            }else if(type === 'work'){
+                x = width * 0.5;
+                y = 120 + (idx + 1) / (count + 1) * (height - 220);
+            }else if(type === 'char'){
+                x = width * 0.8;
+                y = 120 + (idx + 1) / (count + 1) * (height - 200);
+            }else{
+                const angle = (-Math.PI * 0.9) + (idx + 1) / (count + 1) * Math.PI * 1.8;
+                x = width / 2 + Math.cos(angle) * Math.min(270, width * 0.34);
+                y = height * 0.78 + Math.sin(angle) * 85;
+            }
+            node.anchorX = x;
+            node.anchorY = y;
+            node.x = x + (Math.random() - 0.5) * 40;
+            node.y = y + (Math.random() - 0.5) * 40;
+            node.vx = 0;
+            node.vy = 0;
+        });
+    }
+
+    Object.entries(nodesByType).forEach(([type, list]) => assignAnchors(list, type));
+
+    const nodeMap = new Map(nodes.map(node => [node.id, node]));
+    const springs = edges.map(edge => ({
+        source: nodeMap.get(edge.source),
+        target: nodeMap.get(edge.target),
+        weight: edge.weight,
+        kind: edge.kind
+    })).filter(edge => edge.source && edge.target);
+
+    const iterations = 220;
+    for(let step = 0; step < iterations; step++){
+        for(let i = 0; i < nodes.length; i++){
+            const a = nodes[i];
+            for(let j = i + 1; j < nodes.length; j++){
+                const b = nodes[j];
+                let dx = a.x - b.x;
+                let dy = a.y - b.y;
+                let dist2 = dx * dx + dy * dy;
+                if(dist2 < 0.01) dist2 = 0.01;
+                const dist = Math.sqrt(dist2);
+                const minDist = a.radius + b.radius + 20;
+                const repulse = (dist < minDist ? 13000 : 6800) / dist2;
+                const fx = dx / dist * repulse;
+                const fy = dy / dist * repulse;
+                a.vx += fx; a.vy += fy;
+                b.vx -= fx; b.vy -= fy;
+            }
+        }
+
+        springs.forEach(edge => {
+            const a = edge.source;
+            const b = edge.target;
+            let dx = b.x - a.x;
+            let dy = b.y - a.y;
+            let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            const targetLen = edge.kind === 'struct' ? 115 : 140;
+            const spring = (dist - targetLen) * 0.0045 * Math.min(2.2, edge.weight);
+            const fx = dx / dist * spring;
+            const fy = dy / dist * spring;
+            a.vx += fx; a.vy += fy;
+            b.vx -= fx; b.vy -= fy;
+        });
+
+        nodes.forEach(node => {
+            node.vx += (node.anchorX - node.x) * 0.012;
+            node.vy += (node.anchorY - node.y) * 0.012;
+            node.vx *= 0.83;
+            node.vy *= 0.83;
+            node.x += node.vx;
+            node.y += node.vy;
+            node.x = Math.max(30, Math.min(width - 30, node.x));
+            node.y = Math.max(30, Math.min(height - 30, node.y));
+        });
+    }
+
+    return { nodes, edges };
+}
+function getNodeColor(type){
+    return ({
+        main:'#ef4444',
+        sub:'#f59e0b',
+        work:'#2563eb',
+        char:'#8b5cf6',
+        kw:'#0f766e'
+    })[type] || '#64748b';
+}
+function getHighlightState(graph){
+    const q = normalizeText(searchInput.value.trim());
+    if(!q) return null;
+    const matched = new Set();
+    graph.nodes.forEach(node => {
+        const label = node.type === 'work' ? formatWorkTitle(node.label) : node.label;
+        if(normalizeText(label).includes(q) || q.includes(normalizeText(label))){
+            matched.add(node.id);
+        }
+    });
+    if(!matched.size) return null;
+    const related = new Set([...matched]);
+    graph.edges.forEach(edge => {
+        if(matched.has(edge.source) || matched.has(edge.target)){
+            related.add(edge.source);
+            related.add(edge.target);
+        }
+    });
+    return { matched, related };
+}
+function renderGraphSummaryBlock(graph, docs){
+    const nodesSorted = [...graph.nodes].sort((a,b) => b.count - a.count);
+    const coreNodes = nodesSorted.slice(0, 5);
+    graphSummary.innerHTML = [
+        `<div class="summary-item"><span>参与题目</span><small>${docs.length} 条</small></div>`,
+        `<div class="summary-item"><span>图谱节点 / 连线</span><small>${graph.nodes.length} / ${graph.edges.length}</small></div>`,
+        `<div class="summary-item"><span>作品 / 角色 / 关键词</span><small>${graph.counts.works} / ${graph.counts.chars} / ${graph.counts.keywords}</small></div>`,
+        ...coreNodes.map(node => `<div class="summary-item"><span>${escapeHTML(humanNodeLabel(node))}</span><small>${node.count} 次关联</small></div>`)
+    ].join('');
+
+    const topPairs = graph.edges
+        .slice()
+        .sort((a,b) => b.weight - a.weight)
+        .slice(0, 8);
+
+    const nodeMap = new Map(graph.nodes.map(node => [node.id, node]));
+    graphPairs.innerHTML = topPairs.length ? topPairs.map(edge => {
+        const s = nodeMap.get(edge.source);
+        const t = nodeMap.get(edge.target);
+        return `<div class="pair-item"><span>${escapeHTML(shortLabel(humanNodeLabel(s), 9))} ↔ ${escapeHTML(shortLabel(humanNodeLabel(t), 9))}</span><small>${edge.weight.toFixed(1)}</small></div>`;
+    }).join('') : '<div style="color:#94a3b8;font-size:13px;">当前样本过少，尚无稳定强关联。</div>';
+}
+function renderMindMap(){
+    const docs = getDocsForGraph();
+    const graph = buildMindGraph(docs);
+
+    if(!docs.length || graph.nodes.length < 3 || graph.edges.length < 2){
+        mindMapSvg.innerHTML = '';
+        graphEmpty.classList.remove('hidden');
+        renderGraphSummaryBlock({ nodes:[], edges:[], counts:{works:0,chars:0,keywords:0} }, docs);
+        return;
+    }
+
+    graphEmpty.classList.add('hidden');
+    computeGraphLayout(graph.nodes, graph.edges);
+    const highlight = getHighlightState(graph);
+    const highlightRelated = highlight ? highlight.related : null;
+    const matchedNodes = highlight ? highlight.matched : null;
+
+    const edgeHTML = graph.edges.map(edge => {
+        const source = graph.nodes.find(node => node.id === edge.source);
+        const target = graph.nodes.find(node => node.id === edge.target);
+        if(!source || !target) return '';
+        const opacityClass = highlightRelated && !(highlightRelated.has(edge.source) && highlightRelated.has(edge.target)) ? 'graph-faded' : '';
+        return `<line class="graph-edge ${edge.kind === 'struct' ? 'struct' : ''} ${opacityClass}" x1="${source.x.toFixed(1)}" y1="${source.y.toFixed(1)}" x2="${target.x.toFixed(1)}" y2="${target.y.toFixed(1)}" stroke-width="${Math.max(1.2, Math.min(4.6, edge.weight * 0.55)).toFixed(2)}"></line>`;
+    }).join('');
+
+    const nodeHTML = graph.nodes.map(node => {
+        const faded = highlightRelated && !highlightRelated.has(node.id) ? 'graph-faded' : '';
+        const matched = matchedNodes && matchedNodes.has(node.id);
+        const color = getNodeColor(node.type);
+        const stroke = matched ? '#111827' : '#ffffff';
+        const labelY = node.y + node.radius + 14;
+        const label = node.type === 'work' ? formatWorkTitle(node.label) : node.label;
+        return `
+            <g class="graph-node ${faded}" data-label="${escapeHTML(label)}" data-type="${node.type}">
+                <title>${escapeHTML(label)}｜出现 ${node.count} 次</title>
+                <circle cx="${node.x.toFixed(1)}" cy="${node.y.toFixed(1)}" r="${node.radius.toFixed(1)}" fill="${color}" stroke="${stroke}" stroke-width="${matched ? 3 : 2}"></circle>
+                <text class="graph-node-label" x="${node.x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle">${escapeHTML(shortLabel(label, 9))}</text>
+            </g>
+        `;
+    }).join('');
+
+    mindMapSvg.innerHTML = `${edgeHTML}${nodeHTML}`;
+    mindMapSvg.querySelectorAll('.graph-node').forEach(el => {
+        el.addEventListener('click', () => {
+            searchInput.value = el.dataset.label;
+            doSearch();
+        });
+    });
+    renderGraphSummaryBlock(graph, docs);
+}
+
 /* =========================
    初始化
 ========================= */
@@ -1100,12 +1646,14 @@ async function initDatabase(){
         if(!response.ok) throw new Error('无法加载 database.json');
         database = await response.json();
         processedDocs = preprocessDatabase(database);
+        keywordStats = computeKeywordUniverse(processedDocs);
         workStats = computeWorkStats(processedDocs);
 
-        loadStatus.textContent = `✅ 成功加载 ${processedDocs.length} 条选题，已完成分类、作品与角色关联分析`;
+        loadStatus.textContent = `✅ 成功加载 ${processedDocs.length} 条选题，已完成分类、作品/角色映射与关键词关系分析`;
         renderSubcategoryNav();
         renderWorksCloud(workStats.slice(0, 20));
         renderAnalytics();
+        renderMindMap();
         updateStatus(0, false);
     }catch(err){
         console.error(err);
@@ -1144,6 +1692,15 @@ clearBtn.addEventListener('click', () => {
     searchInput.value = '';
     suggestions.classList.remove('show');
     doSearch();
+});
+
+graphModeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        graphModeButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        graphMode = btn.dataset.graphMode;
+        renderMindMap();
+    });
 });
 
 initDatabase();
