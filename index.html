@@ -1,319 +1,1151 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>汉语言文学选题分类检索系统 - 智能增强版</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>汉语言文学选题分类检索系统 Pro</title>
     <style>
-        :root { --primary: #1a73e8; --bg: #f8f9fa; --card-border: #dadce0; }
-        body { font-family: "PingFang SC", sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #202124; }
-        .container { max-width: 900px; margin: 20px auto; }
-        
-        /* 标题区 */
-        .header { text-align: center; margin-bottom: 25px; }
-        .header h1 { color: #1a73e8; margin-bottom: 5px; }
-        
-        /* 分类导航 */
-        .category-nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .cat-btn { 
-            padding: 8px 20px; border-radius: 20px; border: 1px solid #ddd; 
-            background: white; cursor: pointer; transition: 0.3s; font-weight: 500;
+        :root{
+            --primary:#1a73e8;
+            --primary-soft:#e8f0fe;
+            --bg:#f8f9fa;
+            --card:#ffffff;
+            --text:#202124;
+            --sub:#5f6368;
+            --border:#dfe1e5;
+            --success:#137333;
+            --warning:#b06000;
+            --shadow:0 8px 24px rgba(0,0,0,.08);
         }
-        .cat-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(26,115,232,0.3); }
-        .cat-btn:hover:not(.active) { background: #eee; }
+        *{box-sizing:border-box}
+        body{
+            margin:0;
+            padding:20px;
+            background:var(--bg);
+            color:var(--text);
+            font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+        }
+        .container{max-width:1100px;margin:0 auto;}
+        .header{text-align:center;margin:8px 0 24px;}
+        .header h1{margin:0 0 6px;color:var(--primary);font-size:34px;}
+        .header p{margin:0;color:var(--sub);}
+        .panel{
+            background:var(--card);
+            border:1px solid var(--border);
+            border-radius:18px;
+            box-shadow:var(--shadow);
+        }
+        .category-nav,.subcat-nav,.works-cloud{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+        }
+        .toolbar{padding:16px;margin-bottom:14px;}
+        .cat-btn,.subcat-btn,.chip,.work-chip,.action-btn{
+            border:1px solid var(--border);
+            background:#fff;
+            color:#334155;
+            border-radius:999px;
+            padding:8px 14px;
+            cursor:pointer;
+            transition:.2s ease;
+            font-size:14px;
+        }
+        .cat-btn:hover,.subcat-btn:hover,.chip:hover,.work-chip:hover,.action-btn:hover{
+            transform:translateY(-1px);
+            box-shadow:0 4px 12px rgba(0,0,0,.08);
+        }
+        .cat-btn.active,.subcat-btn.active,.chip.active,.work-chip.active{
+            background:var(--primary);
+            border-color:var(--primary);
+            color:#fff;
+        }
 
-        /* 搜索框 */
-        .search-section { position: sticky; top: 10px; z-index: 100; margin-bottom: 20px; }
-        .search-bar { 
-            background: white; display: flex; align-items: center; padding: 5px 20px; 
-            border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #dfe1e5;
+        .search-wrap{
+            position:sticky;
+            top:10px;
+            z-index:20;
+            margin-bottom:14px;
         }
-        input { flex: 1; border: none; padding: 12px; font-size: 16px; outline: none; }
-        
-        /* 高频统计区 */
-        .hot-section { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #dfe1e5; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
-        .hot-title { font-size: 14px; font-weight: bold; color: #5f6368; margin-bottom: 10px; }
-        .hot-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-        .hot-tag { 
-            font-size: 12px; background: #f1f3f4; padding: 4px 10px; 
-            border-radius: 6px; cursor: pointer; transition: 0.2s; 
+        .search-panel{padding:14px 16px;}
+        .search-bar{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            padding:8px 14px;
+            border:1px solid var(--border);
+            border-radius:18px;
+            background:#fff;
+            position:relative;
         }
-        .hot-tag:hover { background: #e8f0fe; color: var(--primary); }
-        .hot-tag b { color: var(--primary); margin-left: 4px; }
+        .search-icon{font-size:18px;color:#64748b;}
+        input{
+            flex:1;
+            border:none;
+            outline:none;
+            font-size:18px;
+            padding:10px 4px;
+            background:transparent;
+        }
+        .helper-row{
+            margin-top:12px;
+            display:flex;
+            justify-content:space-between;
+            gap:12px;
+            flex-wrap:wrap;
+            color:var(--sub);
+            font-size:13px;
+        }
+        .suggestions{
+            display:none;
+            position:absolute;
+            left:0;right:0;top:calc(100% + 8px);
+            background:#fff;
+            border:1px solid var(--border);
+            border-radius:16px;
+            box-shadow:var(--shadow);
+            overflow:hidden;
+        }
+        .suggestions.show{display:block;}
+        .suggestion-item{
+            padding:12px 16px;
+            cursor:pointer;
+            display:flex;
+            justify-content:space-between;
+            gap:12px;
+        }
+        .suggestion-item:hover{background:#f6faff;}
+        .suggestion-type{color:var(--sub);font-size:12px;}
 
-        /* 结果展示 */
-        .status-bar { padding: 0 15px; margin-bottom: 10px; font-size: 13px; color: #5f6368; display: flex; justify-content: space-between; }
-        .results-list { display: grid; gap: 12px; }
-        .card { 
-            background: white; padding: 18px; border-radius: 12px; border: 1px solid #efefef;
-            border-left: 5px solid #dadce0; transition: 0.2s; animation: fadeIn 0.3s ease;
+        .works-section,.analysis-section,.results-section{
+            margin-bottom:14px;
         }
-        .card:hover { border-left-color: var(--primary); transform: translateX(5px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .card-title { font-size: 16px; font-weight: 500; margin-bottom: 10px; color: #1a0dab; line-height: 1.4; }
-        
-        /* 标签样式 (全新二级打标) */
-        .meta { font-size: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .badge { padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
-        .badge-main { background: #e8f0fe; color: #1967d2; }
-        .badge-sub { background: #e6f4ea; color: #137333; border: 1px solid #ceead6; }
-        .year-tag { color: #70757a; font-size: 12px; margin-left: auto; }
+        .section-title{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:12px;
+            margin-bottom:12px;
+        }
+        .section-title h2{
+            font-size:18px;
+            margin:0;
+        }
+        .section-title small{color:var(--sub);}
+        .section-card{padding:16px;}
+        .work-chip{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            padding:8px 12px;
+        }
+        .work-chip .count{
+            background:rgba(26,115,232,.10);
+            color:#1967d2;
+            border-radius:999px;
+            padding:2px 8px;
+            font-size:12px;
+        }
+        .work-chip.active .count{
+            background:rgba(255,255,255,.20);
+            color:#fff;
+        }
 
-        /* 安全防护提示占位 */
-        .intro-screen { text-align: center; padding: 60px 20px; color: #70757a; border: 2px dashed #ddd; border-radius: 15px; margin-top: 20px; background: white; }
-        .intro-screen i { display: block; font-size: 40px; margin-bottom: 10px; font-style: normal; }
-        
-        mark { background: #fff59d; color: black; padding: 0 2px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+        .analytics-grid{
+            display:grid;
+            grid-template-columns:repeat(4,minmax(0,1fr));
+            gap:12px;
+            margin-bottom:16px;
+        }
+        .stat-card{
+            padding:16px;
+            border:1px solid var(--border);
+            border-radius:16px;
+            background:linear-gradient(180deg,#fff,#fbfcff);
+        }
+        .stat-title{font-size:13px;color:var(--sub);margin-bottom:8px;}
+        .stat-value{font-size:28px;font-weight:700;color:#0f172a;}
+        .stat-note{font-size:12px;color:#64748b;margin-top:4px;}
+
+        .analysis-grid{
+            display:grid;
+            grid-template-columns:1.1fr 1.1fr 1fr;
+            gap:14px;
+        }
+        .mini-panel{
+            border:1px solid var(--border);
+            border-radius:16px;
+            padding:14px;
+            background:#fff;
+        }
+        .mini-panel h3{
+            margin:0 0 12px;
+            font-size:15px;
+        }
+        .rank-list{
+            display:grid;
+            gap:8px;
+        }
+        .rank-item{
+            display:grid;
+            grid-template-columns:28px 1fr auto;
+            gap:10px;
+            align-items:center;
+            font-size:14px;
+        }
+        .rank-no{
+            width:28px;height:28px;border-radius:50%;
+            background:var(--primary-soft);
+            color:#1967d2;
+            display:flex;align-items:center;justify-content:center;
+            font-weight:700;font-size:12px;
+        }
+        .rank-bar{
+            height:8px;border-radius:999px;background:#edf2f7;overflow:hidden;
+            margin-top:6px;
+        }
+        .rank-bar span{
+            display:block;height:100%;
+            background:linear-gradient(90deg,#8ab4f8,#1a73e8);
+            border-radius:999px;
+        }
+        .year-chart{
+            display:grid;
+            gap:8px;
+        }
+        .year-item{
+            display:grid;
+            grid-template-columns:58px 1fr auto;
+            gap:10px;
+            align-items:center;
+            font-size:13px;
+        }
+        .year-item .bar{height:10px;background:#eef2ff;border-radius:999px;overflow:hidden;}
+        .year-item .bar span{
+            display:block;height:100%;
+            background:linear-gradient(90deg,#60a5fa,#2563eb);
+        }
+
+        .status-bar{
+            display:flex;
+            justify-content:space-between;
+            gap:12px;
+            align-items:flex-start;
+            flex-wrap:wrap;
+            padding:0 4px;
+            margin-bottom:12px;
+            font-size:13px;
+            color:var(--sub);
+        }
+        .status-left,.status-right{
+            display:flex;
+            flex-wrap:wrap;
+            gap:8px 10px;
+            align-items:center;
+        }
+        .badge{
+            display:inline-flex;align-items:center;gap:6px;
+            padding:5px 10px;
+            border-radius:999px;
+            background:#fff;
+            border:1px solid var(--border);
+        }
+        .badge.primary{background:var(--primary-soft);color:#174ea6;border-color:#d2e3fc;}
+        .badge.success{background:#e6f4ea;color:var(--success);border-color:#ceead6;}
+        .badge.warn{background:#fef7e0;color:var(--warning);border-color:#fde293;}
+
+        .results-list{display:grid;gap:12px;}
+        .card{
+            background:#fff;
+            border:1px solid var(--border);
+            border-radius:18px;
+            padding:18px;
+            transition:.2s ease;
+            box-shadow:0 3px 10px rgba(0,0,0,.03);
+            border-left:6px solid #dbeafe;
+        }
+        .card:hover{
+            transform:translateX(3px);
+            box-shadow:var(--shadow);
+            border-left-color:var(--primary);
+        }
+        .card-title{
+            font-size:17px;
+            line-height:1.65;
+            margin-bottom:12px;
+            color:#1a0dab;
+            font-weight:600;
+        }
+        .meta{
+            display:flex;
+            flex-wrap:wrap;
+            gap:8px;
+            align-items:center;
+            font-size:12px;
+            color:#6b7280;
+            margin-bottom:10px;
+        }
+        .year-badge,.type-tag,.subtype-tag,.work-ref{
+            display:inline-flex;
+            align-items:center;
+            gap:4px;
+            padding:4px 9px;
+            border-radius:999px;
+            border:1px solid var(--border);
+            background:#fff;
+        }
+        .year-badge{background:#e8f0fe;border-color:#d2e3fc;color:#1967d2;}
+        .type-tag{background:#f1f5f9;color:#334155;}
+        .subtype-tag{background:#eef6ff;color:#1d4ed8;}
+        .work-ref{background:#f8fafc;color:#475569;}
+        .snippet{
+            color:#475569;
+            font-size:13px;
+            line-height:1.75;
+        }
+        .work-ref-list{
+            display:flex;
+            flex-wrap:wrap;
+            gap:8px;
+            margin-top:10px;
+        }
+        mark{
+            background:#fff59d;
+            color:#111827;
+            padding:0 2px;
+            border-radius:4px;
+        }
+        .empty{
+            text-align:center;
+            padding:56px 20px;
+            color:#94a3b8;
+            background:#fff;
+            border:1px dashed #cbd5e1;
+            border-radius:18px;
+        }
+        .footer-note{
+            margin-top:12px;
+            color:#94a3b8;
+            font-size:12px;
+            text-align:center;
+        }
+        .hidden{display:none!important;}
+
+        @media (max-width: 960px){
+            .analytics-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+            .analysis-grid{grid-template-columns:1fr;}
+        }
+        @media (max-width: 640px){
+            body{padding:14px;}
+            .header h1{font-size:28px;}
+            .analytics-grid{grid-template-columns:1fr;}
+        }
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="header">
-        <h1>汉语言文学选题智搜</h1>
-        <p>集成历届数据 · 作品人物关联</p>
+        <h1>汉语言文学选题智搜 Pro</h1>
+        <p>智能分类 · 二级标签 · 文学作品关联检索 · 数据分析面板</p>
     </div>
 
-    <div class="category-nav" id="categoryNav">
-        <button class="cat-btn active" data-type="all">全部领域</button>
-        <button class="cat-btn" data-type="文学">文学类</button>
-        <button class="cat-btn" data-type="语言">语言类</button>
-        <button class="cat-btn" data-type="教学">教学类</button>
-        <button class="cat-btn" data-type="文化">文化类</button>
+    <div class="toolbar panel">
+        <div class="section-title">
+            <h2>一级分类</h2>
+            <small>先选大类，再选子类</small>
+        </div>
+        <div class="category-nav" id="categoryNav">
+            <button class="cat-btn active" data-type="all">全部领域</button>
+            <button class="cat-btn" data-type="literature">文学类</button>
+            <button class="cat-btn" data-type="language">语言类</button>
+            <button class="cat-btn" data-type="education">教学类</button>
+            <button class="cat-btn" data-type="culture">文化类</button>
+        </div>
+        <div style="height:12px"></div>
+        <div class="section-title">
+            <h2>二级分类</h2>
+            <small id="subcatHint">当前：全部子类</small>
+        </div>
+        <div class="subcat-nav" id="subcatNav"></div>
     </div>
 
-    <div class="search-section">
-        <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="搜索作家、作品、角色或题目关键词..." autofocus>
+    <div class="search-wrap">
+        <div class="search-panel panel">
+            <div class="search-bar">
+                <span class="search-icon">🔎</span>
+                <input type="text" id="searchInput" placeholder="输入关键词、文学作品名、人物角色、作者、研究方向..." autocomplete="off">
+                <button class="action-btn" id="clearBtn" type="button">清空</button>
+                <div class="suggestions" id="suggestions"></div>
+            </div>
+            <div class="helper-row">
+                <span id="loadStatus">正在同步数据库...</span>
+                <span id="searchExplain">支持：标题直搜 / 文学作品关联搜 / 角色反查作品 / 分类筛选</span>
+            </div>
+
+            <div class="works-section" style="margin-top:16px;">
+                <div class="section-title">
+                    <h2>高频文学作品引用 Top 20</h2>
+                    <small>点击作品名可直接触发关联搜索</small>
+                </div>
+                <div class="works-cloud" id="worksCloud"></div>
+            </div>
         </div>
     </div>
 
-    <div class="hot-section" id="hotSection" style="display: none;">
-        <div class="hot-title">🔥 历届选题高频文学作品引用 Top 20 (点击搜索)</div>
-        <div class="hot-tags" id="hotTags"></div>
+    <div class="analysis-section panel section-card">
+        <div class="section-title">
+            <h2>数据库分析</h2>
+            <small>不展示论文题目，仅展示聚合统计</small>
+        </div>
+
+        <div class="analytics-grid">
+            <div class="stat-card">
+                <div class="stat-title">数据库总量</div>
+                <div class="stat-value" id="statTotal">0</div>
+                <div class="stat-note">已加载论文题目总数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">识别到作品引用</div>
+                <div class="stat-value" id="statWorksCovered">0</div>
+                <div class="stat-note">含作品或角色关联的题目数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">去重作品数</div>
+                <div class="stat-value" id="statUniqueWorks">0</div>
+                <div class="stat-note">显式作品名 + 角色反推作品</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">当前命中结果</div>
+                <div class="stat-value" id="statCurrentResults">0</div>
+                <div class="stat-note">未搜索时不展示具体题目</div>
+            </div>
+        </div>
+
+        <div class="analysis-grid">
+            <div class="mini-panel">
+                <h3>一级分类分布</h3>
+                <div class="rank-list" id="mainTypeStats"></div>
+            </div>
+            <div class="mini-panel">
+                <h3>二级分类 Top 10</h3>
+                <div class="rank-list" id="subTypeStats"></div>
+            </div>
+            <div class="mini-panel">
+                <h3>年份分布 Top 10</h3>
+                <div class="year-chart" id="yearStats"></div>
+            </div>
+        </div>
     </div>
 
-    <div class="status-bar">
-        <span id="loadStatus">正在同步数据库...</span>
-        <span id="resultCount"></span>
-    </div>
+    <div class="results-section">
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="badge" id="resultCount">当前未搜索，已隐藏全部论文题目</span>
+                <span class="badge primary" id="activeCategoryBadge">一级分类：全部</span>
+                <span class="badge primary" id="activeSubcategoryBadge">二级分类：全部</span>
+            </div>
+            <div class="status-right" id="expandedTermsWrap"></div>
+        </div>
 
-    <div id="resultsList" class="results-list">
-        <div class="intro-screen">
-            <i>🛡️</i>
-            <p>为了保护数据资产，请在上方输入关键词开始检索</p>
+        <div id="resultsList" class="results-list">
+            <div class="empty">请输入关键词后再检索。为保护数据库，未搜索时不显示任何论文题目。</div>
         </div>
     </div>
 </div>
 
 <script>
-    let database = [];
-    let currentCategory = 'all';
+/* =========================
+   可配置知识词库（建议持续扩充）
+   作用：
+   1) 作品名别称归一
+   2) 人物角色反查所属作品
+   3) 提升关联搜索准确率
+========================= */
+const WORK_LEXICON = {
+    "红楼梦": ["石头记", "红楼"],
+    "西游记": ["西行记"],
+    "水浒传": ["水浒"],
+    "三国演义": ["三国"],
+    "边城": [],
+    "呐喊": ["《呐喊》"],
+    "彷徨": ["《彷徨》"],
+    "围城": [],
+    "骆驼祥子": ["祥子"],
+    "茶馆": [],
+    "雷雨": [],
+    "家": [],
+    "子夜": [],
+    "呼兰河传": [],
+    "倾城之恋": [],
+    "金锁记": [],
+    "活着": [],
+    "许三观卖血记": [],
+    "平凡的世界": [],
+    "百年孤独": [],
+    "老人与海": [],
+    "哈姆雷特": [],
+    "复活": [],
+    "巴黎圣母院": [],
+    "傲慢与偏见": [],
+    "简·爱": ["简爱"]
+};
 
-    // 1. 作品-人物关联词库 (双向绑定映射)
-    const relationMap = {
-        "红楼梦": ["林黛玉", "贾宝玉", "薛宝钗", "王熙凤", "刘姥姥", "大观园", "金陵十二钗"],
-        "西游记": ["孙悟空", "唐僧", "猪八戒", "沙和尚", "白骨精"],
-        "水浒传": ["宋江", "林冲", "武松", "鲁智深", "潘金莲", "李逵"],
-        "三国演义": ["诸葛亮", "曹操", "刘备", "关羽", "张飞", "周瑜"],
-        "金瓶梅": ["西门庆", "潘金莲", "李瓶儿", "庞春梅"],
-        "骆驼祥子": ["祥子", "虎妞", "老舍"],
-        "阿Q正传": ["阿Q", "鲁迅", "未庄", "赵太爷"],
-        "边城": ["翠翠", "沈从文", "傩送", "天保"],
-        "围城": ["方鸿渐", "孙柔嘉", "苏文纨", "钱钟书"],
-        "平凡的世界": ["孙少平", "孙少安", "田润叶", "路遥"],
-        "雷雨": ["周朴园", "繁漪", "周萍", "鲁侍萍", "四凤", "曹禺"],
-        "子夜": ["吴荪甫", "赵伯韬", "茅盾"],
-        "半生缘": ["顾曼桢", "沈世钧", "顾曼璐", "张爱玲"]
-    };
+const CHARACTER_TO_WORK = {
+    "贾宝玉":"红楼梦",
+    "林黛玉":"红楼梦",
+    "薛宝钗":"红楼梦",
+    "王熙凤":"红楼梦",
+    "史湘云":"红楼梦",
+    "晴雯":"红楼梦",
+    "袭人":"红楼梦",
+    "孙悟空":"西游记",
+    "猪八戒":"西游记",
+    "沙僧":"西游记",
+    "唐僧":"西游记",
+    "宋江":"水浒传",
+    "林冲":"水浒传",
+    "武松":"水浒传",
+    "李逵":"水浒传",
+    "鲁智深":"水浒传",
+    "诸葛亮":"三国演义",
+    "曹操":"三国演义",
+    "刘备":"三国演义",
+    "关羽":"三国演义",
+    "张飞":"三国演义",
+    "祥子":"骆驼祥子",
+    "虎妞":"骆驼祥子",
+    "鲁侍萍":"雷雨",
+    "繁漪":"雷雨",
+    "周朴园":"雷雨",
+    "觉新":"家",
+    "觉慧":"家",
+    "翠翠":"边城",
+    "闰土":"故乡",
+    "阿Q":"阿Q正传",
+    "祥林嫂":"祝福",
+    "孔乙己":"孔乙己",
+    "高老太爷":"家",
+    "方鸿渐":"围城",
+    "苏文纨":"围城",
+    "白流苏":"倾城之恋",
+    "曹七巧":"金锁记",
+    "福贵":"活着",
+    "许三观":"许三观卖血记",
+    "奥菲利娅":"哈姆雷特",
+    "哈姆雷特":"哈姆雷特",
+    "简·爱":"简·爱",
+    "苔丝":"德伯家的苔丝"
+};
 
-    // 2. 智能二级分类词库
-    const subCategoryRules = {
-        "文学": [
-            { name: "古代文学", reg: /诗经|楚辞|唐诗|宋词|元曲|明清小说|三国|红楼|西游|水浒|古文|聊斋|苏轼|李白|杜甫/ },
-            { name: "现当代文学", reg: /鲁迅|张爱玲|莫言|余华|萧红|沈从文|老舍|当代|现代|新时期|女性文学|寻根/ },
-            { name: "外国文学", reg: /外国|西方|哈利波特|莎士比亚|托尔斯泰|对比|翻译|日本/ },
-            { name: "文学理论", reg: /叙事学|意象|悲剧|审美|艺术特征|文本分析|原型|生态评论/ }
-        ],
-        "语言": [
-            { name: "古代汉语", reg: /训诂|说文解字|古汉语|词义演变|虚词|语法研究/ },
-            { name: "现代汉语", reg: /修辞|方言|语法|词汇|流行语|网络用语|句法|语义分析/ },
-            { name: "语言理论", reg: /符号学|认知语言学|社会语言学/ }
-        ],
-        "教学": [
-            { name: "语文教学", reg: /中学|小学|语文|课堂|教材|部编本|阅读教学|作文教学|群文阅读/ },
-            { name: "对外汉语", reg: /对外汉语|HSK|留学生|跨文化交际/ }
-        ],
-        "文化": [
-            { name: "传统文化", reg: /儒家|道家|节庆|礼仪|哲学|非遗/ },
-            { name: "地域文化", reg: /徽派|岭南|地域|民俗|方言文化|巴蜀/ },
-            { name: "传播媒介", reg: /媒介|传播|新媒体|短视频|电影改编|受众/ }
-        ]
-    };
+/* =========================
+   一级分类规则
+========================= */
+const MAIN_CATEGORY_RULES = {
+    literature: /小说|散文|诗歌|戏剧|意象|叙事|文本|形象|创作|作家|作品|人物|文学|审美|悲剧|艺术特征|鲁迅|莫言|余华|张爱玲|老舍|巴金|曹禺|沈从文|诗词/i,
+    language: /词汇|语法|方言|修辞|语义|语音|外来词|流行语|语言特点|句法|构词|词义|词类|语用|训诂|文字|汉字|词缀|歧义|篇章|语料/i,
+    education: /教学|中学|小学|语文|课堂|教材|设计|策略|教育|学生|教师|老师|部编本|阅读教学|写作教学|古诗词教学|课程|核心素养|对外汉语|汉语国际教育/i,
+    culture: /文化|民俗|传播|媒介|节庆|宗教|非物质文化遗产|社会学|价值|受众|地域文化|传统文化|文化传播|影视改编|文化认同|仪式/i
+};
 
-    // 初始化
-    async function initDatabase() {
-        const loadStatus = document.getElementById('loadStatus');
-        try {
-            const response = await fetch('database.json');
-            if (!response.ok) throw new Error();
-            database = await response.json();
-            loadStatus.innerText = `✅ 系统就绪 (共收录 ${database.length} 条数据)`;
-            
-            analyzeHotWorks(); // 执行作品统计
-            // 注意：这里取消了初始调用 doSearch()，保持页面数据隐藏
-        } catch (err) {
-            loadStatus.innerHTML = `❌ 数据库加载失败`;
-        }
+/* =========================
+   二级分类规则
+   可根据你的数据库继续增补
+========================= */
+const SUBCATEGORY_RULES = {
+    literature: [
+        { name: "古代文学", regex: /先秦|两汉|魏晋|南北朝|唐代|宋代|元代|明代|清代|古代文学|古诗词|唐诗|宋词|元曲|明清小说|楚辞|诗经|杜甫|李白|苏轼|李清照|辛弃疾|红楼梦|西游记|水浒传|三国演义/i },
+        { name: "现当代文学", regex: /现当代|现代文学|当代文学|鲁迅|老舍|巴金|曹禺|张爱玲|余华|莫言|路遥|沈从文|萧红|茅盾|骆驼祥子|围城|雷雨|边城|家|子夜|活着/i },
+        { name: "外国文学", regex: /外国文学|欧美文学|英美文学|俄苏文学|日本文学|法国文学|莎士比亚|海明威|托尔斯泰|雨果|巴尔扎克|简·爱|哈姆雷特|百年孤独|老人与海/i },
+        { name: "比较文学", regex: /比较文学|比较研究|中西比较|跨文化文学/i },
+        { name: "文艺理论", regex: /文艺理论|文学理论|叙事学|接受美学|女性主义|后殖民|生态批评|形象学|审美/i }
+    ],
+    language: [
+        { name: "古代汉语", regex: /古代汉语|训诂|说文解字|文言|音韵|古汉语|词诠|古籍/i },
+        { name: "现代汉语", regex: /现代汉语|词汇|语法|语义|语用|句法|词类|短语|篇章|修辞|歧义|构词/i },
+        { name: "汉语方言", regex: /方言|吴语|粤语|闽南话|客家话|赣语|晋语|湘语|方言词/i },
+        { name: "社会语言学", regex: /社会语言学|网络语言|流行语|性别语言|言语交际|话语分析|语体/i },
+        { name: "应用语言学", regex: /应用语言学|语料库|对比分析|偏误分析|词典|辞书/i }
+    ],
+    education: [
+        { name: "语文教学", regex: /语文教学|阅读教学|写作教学|课堂教学|教学设计|古诗词教学|整本书阅读|群文阅读|任务群|核心素养|部编本/i },
+        { name: "中学语文教学", regex: /中学语文|初中语文|高中语文|部编版高中|部编版初中/i },
+        { name: "小学语文教学", regex: /小学语文|小学生|低年级|高年级/i },
+        { name: "对外汉语教学", regex: /对外汉语|汉语国际教育|留学生|国际中文教育|二语习得|汉语作为第二语言/i },
+        { name: "教师教育与课程", regex: /教师专业发展|课程标准|课程资源|教材研究|教学评价|教师素养/i }
+    ],
+    culture: [
+        { name: "传统文化", regex: /传统文化|儒家|道家|佛教|礼俗|家风|伦理/i },
+        { name: "民俗与非遗", regex: /民俗|非遗|非物质文化遗产|节庆|婚俗|丧俗|岁时|仪式/i },
+        { name: "传播与媒介文化", regex: /传播|媒介|新媒体|影视|短视频|改编|受众|传播路径/i },
+        { name: "地域文化", regex: /地域文化|江南文化|齐鲁文化|巴蜀文化|楚文化|徽文化|岭南文化/i },
+        { name: "文化产业与认同", regex: /文化认同|文化产业|文化符号|文化价值|文化消费/i }
+    ]
+};
+
+let database = [];
+let processedDocs = [];
+let workStats = [];
+let currentCategory = 'all';
+let currentSubcategory = 'all';
+let lastExpandedTerms = [];
+let debounceTimer = null;
+
+/* ========== DOM ========== */
+const searchInput = document.getElementById('searchInput');
+const resultsList = document.getElementById('resultsList');
+const loadStatus = document.getElementById('loadStatus');
+const resultCount = document.getElementById('resultCount');
+const worksCloud = document.getElementById('worksCloud');
+const suggestions = document.getElementById('suggestions');
+const subcatNav = document.getElementById('subcatNav');
+const subcatHint = document.getElementById('subcatHint');
+const searchExplain = document.getElementById('searchExplain');
+const activeCategoryBadge = document.getElementById('activeCategoryBadge');
+const activeSubcategoryBadge = document.getElementById('activeSubcategoryBadge');
+const expandedTermsWrap = document.getElementById('expandedTermsWrap');
+const clearBtn = document.getElementById('clearBtn');
+
+const categoryButtons = document.querySelectorAll('.cat-btn');
+
+/* =========================
+   工具函数
+========================= */
+function escapeHTML(str=''){
+    return str.replace(/[&<>"']/g, s => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[s]));
+}
+function escapeRegExp(str=''){
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+function normalizeText(str=''){
+    return String(str)
+        .toLowerCase()
+        .replace(/[“”"‘’'`]/g, '')
+        .replace(/[（）()【】\[\]{}]/g, ' ')
+        .replace(/[·•]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+function unique(arr){
+    return [...new Set(arr)];
+}
+function countBy(list){
+    const m = new Map();
+    list.forEach(v => m.set(v, (m.get(v)||0)+1));
+    return m;
+}
+function sortCountMap(map){
+    return [...map.entries()].sort((a,b)=>b[1]-a[1]);
+}
+function sliceMapEntries(entries, limit=10){
+    return entries.slice(0, limit);
+}
+function markKeyword(text, keyword){
+    if(!keyword) return escapeHTML(text);
+    const safe = escapeRegExp(keyword);
+    try{
+        return escapeHTML(text).replace(new RegExp(`(${safe})`, 'gi'), '<mark>$1</mark>');
+    }catch{
+        return escapeHTML(text);
     }
+}
+function displayMainCategory(type){
+    return ({
+        all:'全部',
+        literature:'文学',
+        language:'语言',
+        education:'教学',
+        culture:'文化'
+    })[type] || '其他';
+}
 
-    // 统计高频文学作品 (提取《》中的内容)
-    function analyzeHotWorks() {
-        const counts = {};
-        const bookRegex = /《([^》]+)》/g;
-        
-        database.forEach(item => {
-            let match;
-            while ((match = bookRegex.exec(item[1])) !== null) {
-                const book = match[1];
-                if (book.length > 1) counts[book] = (counts[book] || 0) + 1;
-            }
+/* =========================
+   作品别名与角色索引
+========================= */
+function buildAliasToWorkMap(){
+    const map = new Map();
+    Object.entries(WORK_LEXICON).forEach(([work, aliases]) => {
+        [work, ...(aliases||[])].forEach(alias => {
+            map.set(normalizeText(alias), work);
         });
-        
-        // 排序取前 20 名
-        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 20);
-        
-        document.getElementById('hotTags').innerHTML = sorted.map(([name, count]) => `
-            <div class="hot-tag" onclick="quickSearch('${name}')">${name}<b>${count}</b></div>
-        `).join('');
-        document.getElementById('hotSection').style.display = 'block';
+    });
+    return map;
+}
+const ALIAS_TO_WORK = buildAliasToWorkMap();
+
+function extractBracketWorks(title){
+    const works = [];
+    const regex = /《([^》]{1,40})》/g;
+    let match;
+    while((match = regex.exec(title)) !== null){
+        const raw = match[1].trim();
+        const work = ALIAS_TO_WORK.get(normalizeText(raw)) || raw;
+        works.push(work);
     }
+    return works;
+}
+function inferWorksFromAliases(title){
+    const norm = normalizeText(title);
+    const works = [];
+    for(const [aliasNorm, work] of ALIAS_TO_WORK.entries()){
+        if(aliasNorm && norm.includes(aliasNorm)) works.push(work);
+    }
+    for(const [character, work] of Object.entries(CHARACTER_TO_WORK)){
+        if(norm.includes(normalizeText(character))) works.push(work);
+    }
+    return unique(works);
+}
 
-    // 点击热词快速搜索
-    window.quickSearch = (word) => { 
-        searchInput.value = word; 
-        doSearch(); 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+/* =========================
+   分类识别
+========================= */
+function detectMainCategory(title){
+    if(MAIN_CATEGORY_RULES.literature.test(title)) return 'literature';
+    if(MAIN_CATEGORY_RULES.language.test(title)) return 'language';
+    if(MAIN_CATEGORY_RULES.education.test(title)) return 'education';
+    if(MAIN_CATEGORY_RULES.culture.test(title)) return 'culture';
+    return 'other';
+}
+function detectSubcategory(title, mainCategory){
+    if(!SUBCATEGORY_RULES[mainCategory]) return '未细分';
+    const matched = SUBCATEGORY_RULES[mainCategory].find(rule => rule.regex.test(title));
+    return matched ? matched.name : '未细分';
+}
 
-    // 智能打标引擎
-    function getAutoTags(title) {
-        let main = "其他", sub = "综合";
-        
-        // 1. 判断大类
-        if (/教学|语文|教材|课堂|学生|老师|教育/.test(title)) main = "教学";
-        else if (/文化|民俗|传播|媒介|节庆|宗教/.test(title)) main = "文化";
-        else if (/词汇|语法|方言|修辞|语义|语音|句法/.test(title)) main = "语言";
-        else main = "文学"; // 默认大类偏文学
+/* =========================
+   检索预处理
+========================= */
+function tokenizeForSuggest(text){
+    return unique(
+        normalizeText(text)
+            .split(/[\s,，。；、：:]+/)
+            .filter(Boolean)
+            .filter(t => t.length >= 2)
+    );
+}
 
-        // 2. 判断子类
-        const rules = subCategoryRules[main];
-        if (rules) {
-            for (let i = 0; i < rules.length; i++) {
-                if (rules[i].reg.test(title)) {
-                    sub = rules[i].name;
-                    break;
-                }
-            }
+function preprocessDatabase(rawData){
+    return rawData.map((item, idx) => {
+        const year = String(item[0] ?? '');
+        const title = String(item[1] ?? '');
+        const explicitWorks = extractBracketWorks(title);
+        const inferredWorks = inferWorksFromAliases(title);
+        const workRefs = unique([...explicitWorks, ...inferredWorks]);
+        const mainCategory = detectMainCategory(title);
+        const subcategory = detectSubcategory(title, mainCategory);
+        const normTitle = normalizeText(title);
+
+        return {
+            id: idx + 1,
+            year,
+            title,
+            normTitle,
+            mainCategory,
+            subcategory,
+            workRefs,
+            tokens: tokenizeForSuggest(title)
+        };
+    });
+}
+
+function computeWorkStats(docs){
+    const counter = new Map();
+    docs.forEach(doc => {
+        doc.workRefs.forEach(work => counter.set(work, (counter.get(work)||0)+1));
+    });
+    return sortCountMap(counter);
+}
+
+/* =========================
+   搜索建议
+========================= */
+function buildSuggestions(query){
+    const q = normalizeText(query);
+    if(!q) return [];
+
+    const workSuggestions = workStats
+        .filter(([work]) => normalizeText(work).includes(q))
+        .slice(0, 6)
+        .map(([work, count]) => ({ label: work, extra: `${count} 条关联论文`, type: '文学作品' }));
+
+    const subSuggestions = [];
+    Object.values(SUBCATEGORY_RULES).flat().forEach(rule => {
+        if(normalizeText(rule.name).includes(q)){
+            subSuggestions.push({ label: rule.name, extra: '二级分类', type: '子类标签' });
         }
-        return { main, sub };
+    });
+
+    const titleSuggestions = processedDocs
+        .filter(doc => doc.normTitle.includes(q))
+        .slice(0, 6)
+        .map(doc => ({ label: doc.title, extra: `${doc.year || '年份未知'} · ${displayMainCategory(doc.mainCategory)} / ${doc.subcategory}`, type: '题目' }));
+
+    return uniqueByLabel([...workSuggestions, ...subSuggestions, ...titleSuggestions]).slice(0, 10);
+}
+function uniqueByLabel(list){
+    const seen = new Set();
+    return list.filter(item => {
+        const key = item.label + '|' + item.type;
+        if(seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+}
+function renderSuggestions(items){
+    if(!items.length){
+        suggestions.classList.remove('show');
+        suggestions.innerHTML = '';
+        return;
     }
+    suggestions.innerHTML = items.map(item => `
+        <div class="suggestion-item" data-value="${escapeHTML(item.label)}">
+            <span>${escapeHTML(item.label)}</span>
+            <span class="suggestion-type">${escapeHTML(item.type)} · ${escapeHTML(item.extra)}</span>
+        </div>
+    `).join('');
+    suggestions.classList.add('show');
 
-    const searchInput = document.getElementById('searchInput');
-    const resultsList = document.getElementById('resultsList');
-    const categoryButtons = document.querySelectorAll('.cat-btn');
-
-    // 监听分类点击
-    categoryButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            categoryButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentCategory = btn.dataset.type; // 获取中文大类名 (如 "文学", "all")
+    suggestions.querySelectorAll('.suggestion-item').forEach(el => {
+        el.addEventListener('click', () => {
+            searchInput.value = el.dataset.value;
+            suggestions.classList.remove('show');
             doSearch();
         });
     });
+}
 
-    // 监听搜索输入
-    searchInput.addEventListener('input', doSearch);
+/* =========================
+   高级检索：字段加权 + 关联扩展 + 分面筛选
+========================= */
+function expandQuery(query){
+    const q = normalizeText(query);
+    if(!q) return { expandedWorks: [], expandedCharacters: [], expandedAliases: [] };
 
-    function doSearch() {
-        const keyword = searchInput.value.trim().toLowerCase();
-        
-        // 【核心安全策略】：未搜索时显示占位符，保护数据
-        if (!keyword) {
-            resultsList.innerHTML = `
-                <div class="intro-screen">
-                    <i>🛡️</i><p>为了保护数据资产，请在上方输入关键词开始检索</p>
-                </div>`;
-            document.getElementById('resultCount').innerText = "";
-            return;
+    const expandedWorks = new Set();
+    const expandedCharacters = new Set();
+    const expandedAliases = new Set();
+
+    for(const [aliasNorm, work] of ALIAS_TO_WORK.entries()){
+        if(aliasNorm.includes(q) || q.includes(aliasNorm)){
+            expandedWorks.add(work);
+            expandedAliases.add(aliasNorm);
         }
-
-        // 1. 作品-人物关联矩阵引擎
-        let searchKeywords = [keyword];
-        for (let work in relationMap) {
-            const roles = relationMap[work].map(r => r.toLowerCase());
-            const workLower = work.toLowerCase();
-            
-            // 如果用户搜作品，关联角色；如果搜角色，关联作品
-            if (keyword.includes(workLower) || roles.some(r => keyword.includes(r))) {
-                searchKeywords.push(workLower, ...roles);
-            }
-        }
-        // 去重
-        searchKeywords = [...new Set(searchKeywords)];
-
-        // 2. 过滤数据
-        let filtered = database.filter(item => {
-            const title = item[1].toLowerCase();
-            const year = item[0].toLowerCase();
-            
-            // A. 大类过滤 (通过 getAutoTags 动态判断该记录的所属大类)
-            if (currentCategory !== 'all') {
-                const tags = getAutoTags(item[1]);
-                if (tags.main !== currentCategory) return false;
-            }
-
-            // B. 关联关键词过滤
-            return searchKeywords.some(key => title.includes(key) || year.includes(key));
-        });
-
-        renderResults(filtered, searchKeywords);
     }
 
-    function renderResults(data, searchKeywords) {
-        document.getElementById('resultCount').innerText = `找到 ${data.length} 条相关结果`;
-        
-        if (data.length === 0) {
-            resultsList.innerHTML = '<div class="intro-screen"><i>😶</i><p>当前分类下暂无匹配结果，请尝试其他关键词</p></div>';
-            return;
+    Object.entries(CHARACTER_TO_WORK).forEach(([character, work]) => {
+        const normChar = normalizeText(character);
+        if(normChar.includes(q) || q.includes(normChar)){
+            expandedCharacters.add(character);
+            expandedWorks.add(work);
         }
+    });
 
-        const displayData = data.slice(0, 300); // 性能保护机制
-        
-        resultsList.innerHTML = displayData.map(item => {
-            const tags = getAutoTags(item[1]);
-            
-            // 多关键词高亮 (匹配原词和关联词)
-            let highlightedTitle = item[1];
-            searchKeywords.forEach(kw => {
-                if(kw) highlightedTitle = highlightedTitle.replace(new RegExp(`(${kw})`, 'gi'), '<mark>$1</mark>');
-            });
-            
-            return `
-                <div class="card">
-                    <div class="card-title">${highlightedTitle}</div>
-                    <div class="meta">
-                        <span class="badge badge-main">${tags.main}</span>
-                        <span class="badge badge-sub">${tags.sub}</span>
-                        <span class="year-tag">🕒 ${item[0]}</span>
-                    </div>
+    return {
+        expandedWorks: [...expandedWorks],
+        expandedCharacters: [...expandedCharacters],
+        expandedAliases: [...expandedAliases]
+    };
+}
+
+function scoreDoc(doc, query, expansion){
+    if(!query) return 0;
+    const q = normalizeText(query);
+    let score = 0;
+    const title = doc.normTitle;
+
+    if(title === q) score += 180;
+    if(title.includes(q)) score += 90;
+    if(title.startsWith(q)) score += 40;
+
+    // 多词查询的字段加权
+    const terms = q.split(/\s+/).filter(Boolean);
+    if(terms.length > 1){
+        const matched = terms.filter(t => title.includes(t)).length;
+        score += matched * 18;
+        if(matched === terms.length) score += 55;
+    }
+
+    // 文学作品关联得分
+    if(doc.workRefs.some(w => normalizeText(w).includes(q) || q.includes(normalizeText(w)))){
+        score += 95;
+    }
+    if(expansion.expandedWorks.length && doc.workRefs.some(w => expansion.expandedWorks.includes(w))){
+        score += 85;
+    }
+
+    // 子类/大类命中
+    if(normalizeText(doc.subcategory).includes(q)) score += 30;
+    if(normalizeText(displayMainCategory(doc.mainCategory)).includes(q)) score += 18;
+
+    // 年份命中
+    if(doc.year && String(doc.year).includes(q)) score += 24;
+
+    // 轻微年份权重（近年略优，但不压制相关性）
+    const y = parseInt(doc.year, 10);
+    if(!Number.isNaN(y)) score += Math.max(0, (y - 2000) * 0.03);
+
+    return score;
+}
+
+function filterDocsByFacet(docs){
+    return docs.filter(doc => {
+        const mainOk = currentCategory === 'all' || doc.mainCategory === currentCategory;
+        const subOk = currentSubcategory === 'all' || doc.subcategory === currentSubcategory;
+        return mainOk && subOk;
+    });
+}
+
+function doSearch(){
+    const keyword = searchInput.value.trim();
+    const normalizedKeyword = normalizeText(keyword);
+
+    renderSuggestions(buildSuggestions(keyword));
+
+    // 未搜索时不展示任何论文题目
+    if(!normalizedKeyword){
+        lastExpandedTerms = [];
+        updateStatus(0, false);
+        resultsList.innerHTML = '<div class="empty">请输入关键词后再检索。为保护数据库，未搜索时不显示任何论文题目。</div>';
+        document.getElementById('statCurrentResults').textContent = '0';
+        renderExpandedTerms([]);
+        searchExplain.textContent = '支持：标题直搜 / 文学作品关联搜 / 角色反查作品 / 分类筛选';
+        return;
+    }
+
+    const expansion = expandQuery(keyword);
+    lastExpandedTerms = unique([
+        ...expansion.expandedWorks.map(w => `作品：${w}`),
+        ...expansion.expandedCharacters.map(c => `角色：${c}`)
+    ]);
+
+    const facetFiltered = filterDocsByFacet(processedDocs);
+
+    const scored = facetFiltered
+        .map(doc => ({ doc, score: scoreDoc(doc, keyword, expansion) }))
+        .filter(item => item.score > 0)
+        .sort((a,b) => b.score - a.score);
+
+    renderResults(scored.map(x => x.doc), keyword, expansion);
+    updateStatus(scored.length, true);
+    renderExpandedTerms(lastExpandedTerms);
+    document.getElementById('statCurrentResults').textContent = String(scored.length);
+
+    searchExplain.textContent = lastExpandedTerms.length
+        ? `已启用关联扩展：${lastExpandedTerms.join(' / ')}`
+        : '当前为普通标题检索';
+}
+
+function renderExpandedTerms(items){
+    if(!items.length){
+        expandedTermsWrap.innerHTML = '<span class="badge warn">未触发关联扩展</span>';
+        return;
+    }
+    expandedTermsWrap.innerHTML = items.map(item => `<span class="badge success">${escapeHTML(item)}</span>`).join('');
+}
+
+function renderResults(data, keyword){
+    resultCount.textContent = `当前命中 ${data.length} 条`;
+    if(!data.length){
+        resultsList.innerHTML = '<div class="empty">没有找到匹配结果。可尝试作品名、人物名、作者名、子类标签或更短关键词。</div>';
+        return;
+    }
+
+    const displayData = data.slice(0, 300);
+    resultsList.innerHTML = displayData.map(doc => {
+        const highlightedTitle = markKeyword(doc.title, keyword);
+        const workRefsHTML = doc.workRefs.length
+            ? `<div class="work-ref-list">${doc.workRefs.slice(0,5).map(w => `<span class="work-ref">关联作品：${escapeHTML(w)}</span>`).join('')}</div>`
+            : '';
+
+        const snippet = buildSnippet(doc, keyword);
+
+        return `
+            <div class="card">
+                <div class="card-title">${highlightedTitle}</div>
+                <div class="meta">
+                    <span class="year-badge">${escapeHTML(doc.year || '未知年份')}</span>
+                    <span class="type-tag">${escapeHTML(displayMainCategory(doc.mainCategory))}</span>
+                    <span class="subtype-tag">${escapeHTML(doc.subcategory)}</span>
+                    <span class="type-tag">汉语言文学专业</span>
                 </div>
-            `;
-        }).join('') + (data.length > 300 ? '<p style="text-align:center; color:#999; font-size:12px; margin-top:15px;">为保证流畅度，仅展示前300条，请增加搜索词以精确查找...</p>' : '');
-    }
+                <div class="snippet">${snippet}</div>
+                ${workRefsHTML}
+            </div>
+        `;
+    }).join('') + (data.length > 300
+        ? '<div class="footer-note">结果过多，仅展示前 300 条。建议增加关键词或切换子类进一步缩小范围。</div>'
+        : '');
+}
 
-    initDatabase();
+function buildSnippet(doc, keyword){
+    const hints = [];
+    if(doc.workRefs.length) hints.push(`命中作品关联：${doc.workRefs.join('、')}`);
+    hints.push(`分类路径：${displayMainCategory(doc.mainCategory)} / ${doc.subcategory}`);
+    if(keyword && normalizeText(doc.title).includes(normalizeText(keyword))){
+        hints.push('命中方式：标题直接匹配');
+    }else if(doc.workRefs.some(w => normalizeText(w).includes(normalizeText(keyword)))){
+        hints.push('命中方式：作品关联匹配');
+    }else{
+        hints.push('命中方式：综合相关度匹配');
+    }
+    return escapeHTML(hints.join(' ｜ '));
+}
+
+/* =========================
+   页面状态
+========================= */
+function updateStatus(resultNum, searched){
+    activeCategoryBadge.textContent = `一级分类：${displayMainCategory(currentCategory)}`;
+    activeSubcategoryBadge.textContent = `二级分类：${currentSubcategory === 'all' ? '全部' : currentSubcategory}`;
+    if(!searched){
+        resultCount.textContent = '当前未搜索，已隐藏全部论文题目';
+    }else{
+        resultCount.textContent = `当前命中 ${resultNum} 条`;
+    }
+}
+
+function renderSubcategoryNav(){
+    const currentRules = currentCategory === 'all'
+        ? unique(Object.values(SUBCATEGORY_RULES).flat().map(r => r.name))
+        : (SUBCATEGORY_RULES[currentCategory] || []).map(r => r.name);
+
+    const allItems = ['all', ...currentRules];
+    subcatNav.innerHTML = allItems.map(name => {
+        const label = name === 'all' ? '全部子类' : name;
+        const active = currentSubcategory === name ? 'active' : '';
+        return `<button class="subcat-btn ${active}" data-sub="${escapeHTML(name)}">${escapeHTML(label)}</button>`;
+    }).join('');
+
+    subcatHint.textContent = `当前：${currentSubcategory === 'all' ? '全部子类' : currentSubcategory}`;
+
+    subcatNav.querySelectorAll('.subcat-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentSubcategory = btn.dataset.sub;
+            renderSubcategoryNav();
+            doSearch();
+        });
+    });
+}
+
+function renderWorksCloud(topWorks){
+    if(!topWorks.length){
+        worksCloud.innerHTML = '<span style="color:#94a3b8;font-size:13px;">暂未识别到作品引用统计</span>';
+        return;
+    }
+    worksCloud.innerHTML = topWorks.map(([work, count]) => `
+        <button class="work-chip" data-work="${escapeHTML(work)}">
+            <span>${escapeHTML(work)}</span>
+            <span class="count">${count}</span>
+        </button>
+    `).join('');
+
+    worksCloud.querySelectorAll('.work-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+            searchInput.value = btn.dataset.work;
+            doSearch();
+        });
+    });
+}
+
+function renderAnalytics(){
+    document.getElementById('statTotal').textContent = String(processedDocs.length);
+    document.getElementById('statWorksCovered').textContent = String(processedDocs.filter(d => d.workRefs.length).length);
+    document.getElementById('statUniqueWorks').textContent = String(workStats.length);
+
+    const mainCounts = countBy(processedDocs.map(doc => displayMainCategory(doc.mainCategory)));
+    const subCounts = countBy(processedDocs.map(doc => doc.subcategory));
+    const yearCounts = countBy(processedDocs.map(doc => doc.year || '未知'));
+
+    renderRankList('mainTypeStats', sliceMapEntries(sortCountMap(mainCounts), 8));
+    renderRankList('subTypeStats', sliceMapEntries(sortCountMap(subCounts), 10));
+    renderYearChart(sliceMapEntries(sortCountMap(yearCounts), 10));
+}
+
+function renderRankList(id, items){
+    const max = items.length ? items[0][1] : 1;
+    document.getElementById(id).innerHTML = items.map(([name, count], i) => `
+        <div>
+            <div class="rank-item">
+                <span class="rank-no">${i + 1}</span>
+                <div>
+                    <div>${escapeHTML(name)}</div>
+                    <div class="rank-bar"><span style="width:${(count / max) * 100}%"></span></div>
+                </div>
+                <strong>${count}</strong>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderYearChart(items){
+    const max = items.length ? items[0][1] : 1;
+    document.getElementById('yearStats').innerHTML = items.map(([year, count]) => `
+        <div class="year-item">
+            <span>${escapeHTML(year)}</span>
+            <div class="bar"><span style="width:${(count / max) * 100}%"></span></div>
+            <strong>${count}</strong>
+        </div>
+    `).join('');
+}
+
+/* =========================
+   初始化
+========================= */
+async function initDatabase(){
+    try{
+        const response = await fetch('database.json');
+        if(!response.ok) throw new Error('无法加载 database.json');
+        database = await response.json();
+        processedDocs = preprocessDatabase(database);
+        workStats = computeWorkStats(processedDocs);
+
+        loadStatus.textContent = `✅ 成功加载 ${processedDocs.length} 条选题，已完成分类、作品与角色关联分析`;
+        renderSubcategoryNav();
+        renderWorksCloud(workStats.slice(0, 20));
+        renderAnalytics();
+        updateStatus(0, false);
+    }catch(err){
+        console.error(err);
+        loadStatus.innerHTML = '❌ 加载失败，请检查 database.json 文件路径与格式';
+        worksCloud.innerHTML = '<span style="color:#dc2626;">作品统计加载失败</span>';
+    }
+}
+
+/* =========================
+   事件绑定
+========================= */
+categoryButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        categoryButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentCategory = btn.dataset.type;
+        currentSubcategory = 'all';
+        renderSubcategoryNav();
+        doSearch();
+    });
+});
+
+searchInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(doSearch, 120);
+});
+searchInput.addEventListener('focus', () => {
+    if(searchInput.value.trim()) renderSuggestions(buildSuggestions(searchInput.value));
+});
+document.addEventListener('click', (e) => {
+    if(!suggestions.contains(e.target) && e.target !== searchInput){
+        suggestions.classList.remove('show');
+    }
+});
+clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    suggestions.classList.remove('show');
+    doSearch();
+});
+
+initDatabase();
 </script>
 </body>
 </html>
