@@ -3,19 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>汉语言文学选题智搜 - 安全版</title>
+    <title>汉语言文学选题分类检索系统 - 智能增强版</title>
     <style>
-        :root { --primary: #1a73e8; --bg: #f8f9fa; --accent: #34a853; }
+        :root { --primary: #1a73e8; --bg: #f8f9fa; --card-border: #dadce0; }
         body { font-family: "PingFang SC", sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #202124; }
         .container { max-width: 900px; margin: 20px auto; }
         
-        /* 统计与提示区 */
-        .hot-section { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #dfe1e5; }
-        .hot-title { font-size: 14px; font-weight: bold; color: #5f6368; margin-bottom: 10px; }
-        .hot-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-        .hot-tag { font-size: 12px; background: #f1f3f4; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        .hot-tag:hover { background: #e8f0fe; color: var(--primary); }
-        .hot-tag b { color: var(--primary); margin-left: 4px; }
+        /* 标题区 */
+        .header { text-align: center; margin-bottom: 25px; }
+        .header h1 { color: #1a73e8; margin-bottom: 5px; }
+        
+        /* 分类导航 */
+        .category-nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .cat-btn { 
+            padding: 8px 20px; border-radius: 20px; border: 1px solid #ddd; 
+            background: white; cursor: pointer; transition: 0.3s; font-weight: 500;
+        }
+        .cat-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(26,115,232,0.3); }
+        .cat-btn:hover:not(.active) { background: #eee; }
 
         /* 搜索框 */
         .search-section { position: sticky; top: 10px; z-index: 100; margin-bottom: 20px; }
@@ -25,56 +30,78 @@
         }
         input { flex: 1; border: none; padding: 12px; font-size: 16px; outline: none; }
         
-        /* 分类导航 */
-        .category-nav { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
-        .cat-btn { padding: 6px 16px; border-radius: 20px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 14px; }
-        .cat-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        /* 高频统计区 */
+        .hot-section { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #dfe1e5; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .hot-title { font-size: 14px; font-weight: bold; color: #5f6368; margin-bottom: 10px; }
+        .hot-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .hot-tag { 
+            font-size: 12px; background: #f1f3f4; padding: 4px 10px; 
+            border-radius: 6px; cursor: pointer; transition: 0.2s; 
+        }
+        .hot-tag:hover { background: #e8f0fe; color: var(--primary); }
+        .hot-tag b { color: var(--primary); margin-left: 4px; }
 
         /* 结果展示 */
+        .status-bar { padding: 0 15px; margin-bottom: 10px; font-size: 13px; color: #5f6368; display: flex; justify-content: space-between; }
         .results-list { display: grid; gap: 12px; }
-        .card { background: white; padding: 18px; border-radius: 12px; border: 1px solid #efefef; border-left: 5px solid #dadce0; }
-        .card-title { font-size: 16px; font-weight: 500; color: #1a0dab; margin-bottom: 8px; }
-        .badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 5px; }
-        .badge-main { background: #e8f0fe; color: #1967d2; }
-        .badge-sub { background: #e6f4ea; color: #137333; }
+        .card { 
+            background: white; padding: 18px; border-radius: 12px; border: 1px solid #efefef;
+            border-left: 5px solid #dadce0; transition: 0.2s; animation: fadeIn 0.3s ease;
+        }
+        .card:hover { border-left-color: var(--primary); transform: translateX(5px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .card-title { font-size: 16px; font-weight: 500; margin-bottom: 10px; color: #1a0dab; line-height: 1.4; }
         
-        /* 默认占位提示 */
-        .intro-screen { text-align: center; padding: 80px 20px; color: #70757a; border: 2px dashed #ddd; border-radius: 20px; margin-top: 20px; }
-        .intro-screen i { display: block; font-size: 40px; margin-bottom: 10px; font-style: normal; }
+        /* 标签样式 (全新二级打标) */
+        .meta { font-size: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .badge { padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
+        .badge-main { background: #e8f0fe; color: #1967d2; }
+        .badge-sub { background: #e6f4ea; color: #137333; border: 1px solid #ceead6; }
+        .year-tag { color: #70757a; font-size: 12px; margin-left: auto; }
 
-        mark { background: #fff59d; color: black; padding: 0 1px; }
+        /* 安全防护提示占位 */
+        .intro-screen { text-align: center; padding: 60px 20px; color: #70757a; border: 2px dashed #ddd; border-radius: 15px; margin-top: 20px; background: white; }
+        .intro-screen i { display: block; font-size: 40px; margin-bottom: 10px; font-style: normal; }
+        
+        mark { background: #fff59d; color: black; padding: 0 2px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div style="text-align: center; margin-bottom: 25px;">
-        <h1 style="color:var(--primary)">汉语言文学选题智搜</h1>
-        <p style="color:#666">请输入关键词开始检索</p>
+    <div class="header">
+        <h1>汉语言文学选题智搜</h1>
+        <p>集成历届数据 · 自动打标 · 作品人物关联</p>
+    </div>
+
+    <div class="category-nav" id="categoryNav">
+        <button class="cat-btn active" data-type="all">全部领域</button>
+        <button class="cat-btn" data-type="文学">文学类</button>
+        <button class="cat-btn" data-type="语言">语言类</button>
+        <button class="cat-btn" data-type="教学">教学类</button>
+        <button class="cat-btn" data-type="文化">文化类</button>
     </div>
 
     <div class="search-section">
         <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="搜索作家、作品、角色或题目..." autofocus>
+            <input type="text" id="searchInput" placeholder="搜索作家、作品、角色或题目关键词..." autofocus>
         </div>
     </div>
 
     <div class="hot-section" id="hotSection" style="display: none;">
-        <div class="hot-title">🔥 历届选题热点（点击直接搜索）</div>
+        <div class="hot-title">🔥 历届选题高频文学作品引用 Top 20 (点击搜索)</div>
         <div class="hot-tags" id="hotTags"></div>
     </div>
 
-    <div class="category-nav">
-        <button class="cat-btn active" data-type="all">全部</button>
-        <button class="cat-btn" data-type="literature">文学</button>
-        <button class="cat-btn" data-type="language">语言</button>
-        <button class="cat-btn" data-type="education">教学</button>
+    <div class="status-bar">
+        <span id="loadStatus">正在同步数据库...</span>
+        <span id="resultCount"></span>
     </div>
 
     <div id="resultsList" class="results-list">
         <div class="intro-screen">
-            <i>🔍</i>
-            <p>请在上方输入关键词后查看结果</p>
+            <i>🛡️</i>
+            <p>为了保护数据资产，请在上方输入关键词开始检索</p>
         </div>
     </div>
 </div>
@@ -83,120 +110,208 @@
     let database = [];
     let currentCategory = 'all';
 
-    // 二级分类规则
+    // 1. 作品-人物关联词库 (双向绑定映射)
+    const relationMap = {
+        "红楼梦": ["林黛玉", "贾宝玉", "薛宝钗", "王熙凤", "刘姥姥", "大观园", "金陵十二钗"],
+        "西游记": ["孙悟空", "唐僧", "猪八戒", "沙和尚", "白骨精"],
+        "水浒传": ["宋江", "林冲", "武松", "鲁智深", "潘金莲", "李逵"],
+        "三国演义": ["诸葛亮", "曹操", "刘备", "关羽", "张飞", "周瑜"],
+        "金瓶梅": ["西门庆", "潘金莲", "李瓶儿", "庞春梅"],
+        "骆驼祥子": ["祥子", "虎妞", "老舍"],
+        "阿Q正传": ["阿Q", "鲁迅", "未庄", "赵太爷"],
+        "边城": ["翠翠", "沈从文", "傩送", "天保"],
+        "围城": ["方鸿渐", "孙柔嘉", "苏文纨", "钱钟书"],
+        "平凡的世界": ["孙少平", "孙少安", "田润叶", "路遥"],
+        "雷雨": ["周朴园", "繁漪", "周萍", "鲁侍萍", "四凤", "曹禺"],
+        "子夜": ["吴荪甫", "赵伯韬", "茅盾"],
+        "半生缘": ["顾曼桢", "沈世钧", "顾曼璐", "张爱玲"]
+    };
+
+    // 2. 智能二级分类词库
     const subCategoryRules = {
-        literature: [
-            { name: "古代文学", reg: /诗经|楚辞|唐诗|宋词|元曲|明清小说|红楼|苏轼|李白|杜甫/ },
-            { name: "现当代文学", reg: /鲁迅|张爱玲|莫言|余华|沈从文|当代|现代|女性文学/ },
-            { name: "外国文学", reg: /外国|西方|哈利波特|莎士比亚|对比|翻译/ },
-            { name: "文学理论", reg: /叙事学|意象|审美|原型/ }
+        "文学": [
+            { name: "古代文学", reg: /诗经|楚辞|唐诗|宋词|元曲|明清小说|三国|红楼|西游|水浒|古文|聊斋|苏轼|李白|杜甫/ },
+            { name: "现当代文学", reg: /鲁迅|张爱玲|莫言|余华|萧红|沈从文|老舍|当代|现代|新时期|女性文学|寻根/ },
+            { name: "外国文学", reg: /外国|西方|哈利波特|莎士比亚|托尔斯泰|对比|翻译|日本/ },
+            { name: "文学理论", reg: /叙事学|意象|悲剧|审美|艺术特征|文本分析|原型|生态评论/ }
         ],
-        language: [
-            { name: "古代汉语", reg: /训诂|说文解字|古汉语|虚词/ },
-            { name: "现代汉语", reg: /修辞|方言|语法|词汇|流行语|网络用语/ }
+        "语言": [
+            { name: "古代汉语", reg: /训诂|说文解字|古汉语|词义演变|虚词|语法研究/ },
+            { name: "现代汉语", reg: /修辞|方言|语法|词汇|流行语|网络用语|句法|语义分析/ },
+            { name: "语言理论", reg: /符号学|认知语言学|社会语言学/ }
         ],
-        education: [
-            { name: "语文教学", reg: /中学|小学|语文|课堂|教材|部编本/ },
-            { name: "对外汉语", reg: /对外汉语|文化传播/ }
+        "教学": [
+            { name: "语文教学", reg: /中学|小学|语文|课堂|教材|部编本|阅读教学|作文教学|群文阅读/ },
+            { name: "对外汉语", reg: /对外汉语|HSK|留学生|跨文化交际/ }
+        ],
+        "文化": [
+            { name: "传统文化", reg: /儒家|道家|节庆|礼仪|哲学|非遗/ },
+            { name: "地域文化", reg: /徽派|岭南|地域|民俗|方言文化|巴蜀/ },
+            { name: "传播媒介", reg: /媒介|传播|新媒体|短视频|电影改编|受众/ }
         ]
     };
 
-    const relationMap = {
-        "红楼梦": ["林黛玉", "贾宝玉", "薛宝钗"],
-        "边城": ["翠翠", "沈从文", "傩送"],
-        "鲁迅": ["阿Q", "孔乙己", "祥林嫂"]
-    };
-
+    // 初始化
     async function initDatabase() {
+        const loadStatus = document.getElementById('loadStatus');
         try {
             const response = await fetch('database.json');
+            if (!response.ok) throw new Error();
             database = await response.json();
-            analyzeHotWorks();
-            // 注意：这里移除了 init 时的 doSearch() 调用，保持页面初始为空
-        } catch (err) { console.error("数据加载失败"); }
-    }
-
-    function getAutoTags(title) {
-        let result = { main: "其他", sub: "综合" };
-        if (/教学|语文|教材|学生/.test(title)) result.main = "教学";
-        else if (/文化|民俗|媒介/.test(title)) result.main = "文化";
-        else if (/词汇|语法|方言|修辞/.test(title)) result.main = "语言";
-        else result.main = "文学";
-
-        const categoryKey = { "文学": "literature", "语言": "language", "教学": "education", "文化": "culture" }[result.main];
-        if (subCategoryRules[categoryKey]) {
-            const matchedSub = subCategoryRules[categoryKey].find(s => s.reg.test(title));
-            if (matchedSub) result.sub = matchedSub.name;
-        }
-        return result;
-    }
-
-    // 修改后的核心搜索函数
-    function doSearch() {
-        const query = document.getElementById('searchInput').value.trim().toLowerCase();
-        const list = document.getElementById('resultsList');
-
-        // 【关键修改】：如果输入为空，清空列表并显示提示
-        if (!query) {
-            list.innerHTML = `
-                <div class="intro-screen">
-                    <i>🔍</i>
-                    <p>为了保护数据库，请在上方输入关键词后查看结果</p>
-                </div>`;
-            return;
-        }
-
-        // 关联检索逻辑
-        let searchKeywords = [query];
-        for (let work in relationMap) {
-            if (query.includes(work.toLowerCase()) || relationMap[work].some(r => query.includes(r.toLowerCase()))) {
-                searchKeywords = [...new Set([...searchKeywords, work.toLowerCase(), ...relationMap[work].map(v=>v.toLowerCase())])];
-            }
-        }
-
-        // 过滤逻辑
-        let filtered = database.filter(item => {
-            const title = item[1].toLowerCase();
-            return searchKeywords.some(key => title.includes(key));
-        });
-
-        // 渲染结果
-        if (filtered.length === 0) {
-            list.innerHTML = '<div class="intro-screen"><i>😶</i><p>未找到匹配结果，请尝试其他词</p></div>';
-        } else {
-            list.innerHTML = filtered.slice(0, 300).map(item => {
-                const tags = getAutoTags(item[1]);
-                const highlightedTitle = item[1].replace(new RegExp(`(${query})`, 'gi'), '<mark>$1</mark>');
-                return `
-                    <div class="card">
-                        <div class="card-title">${highlightedTitle}</div>
-                        <div>
-                            <span class="badge badge-main">${tags.main}</span>
-                            <span class="badge badge-sub">${tags.sub}</span>
-                            <span style="font-size:11px; color:#888;">· ${item[0]}</span>
-                        </div>
-                    </div>`;
-            }).join('');
+            loadStatus.innerText = `✅ 系统就绪 (共收录 ${database.length} 条数据)`;
+            
+            analyzeHotWorks(); // 执行作品统计
+            // 注意：这里取消了初始调用 doSearch()，保持页面数据隐藏
+        } catch (err) {
+            loadStatus.innerHTML = `❌ 数据库加载失败`;
         }
     }
 
+    // 统计高频文学作品 (提取《》中的内容)
     function analyzeHotWorks() {
         const counts = {};
         const bookRegex = /《([^》]+)》/g;
+        
         database.forEach(item => {
             let match;
             while ((match = bookRegex.exec(item[1])) !== null) {
-                const b = match[1]; if(b.length > 1) counts[b] = (counts[b] || 0) + 1;
+                const book = match[1];
+                if (book.length > 1) counts[book] = (counts[book] || 0) + 1;
             }
         });
-        const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0, 20);
-        document.getElementById('hotTags').innerHTML = sorted.map(([n, c]) => 
-            `<div class="hot-tag" onclick="quickSearch('${n}')">${n}<b>${c}</b></div>`).join('');
+        
+        // 排序取前 20 名
+        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 20);
+        
+        document.getElementById('hotTags').innerHTML = sorted.map(([name, count]) => `
+            <div class="hot-tag" onclick="quickSearch('${name}')">${name}<b>${count}</b></div>
+        `).join('');
         document.getElementById('hotSection').style.display = 'block';
     }
 
-    window.quickSearch = (w) => { document.getElementById('searchInput').value = w; doSearch(); };
-    document.getElementById('searchInput').addEventListener('input', doSearch);
+    // 点击热词快速搜索
+    window.quickSearch = (word) => { 
+        searchInput.value = word; 
+        doSearch(); 
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // 智能打标引擎
+    function getAutoTags(title) {
+        let main = "其他", sub = "综合";
+        
+        // 1. 判断大类
+        if (/教学|语文|教材|课堂|学生|老师|教育/.test(title)) main = "教学";
+        else if (/文化|民俗|传播|媒介|节庆|宗教/.test(title)) main = "文化";
+        else if (/词汇|语法|方言|修辞|语义|语音|句法/.test(title)) main = "语言";
+        else main = "文学"; // 默认大类偏文学
+
+        // 2. 判断子类
+        const rules = subCategoryRules[main];
+        if (rules) {
+            for (let i = 0; i < rules.length; i++) {
+                if (rules[i].reg.test(title)) {
+                    sub = rules[i].name;
+                    break;
+                }
+            }
+        }
+        return { main, sub };
+    }
+
+    const searchInput = document.getElementById('searchInput');
+    const resultsList = document.getElementById('resultsList');
+    const categoryButtons = document.querySelectorAll('.cat-btn');
+
+    // 监听分类点击
+    categoryButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            categoryButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentCategory = btn.dataset.type; // 获取中文大类名 (如 "文学", "all")
+            doSearch();
+        });
+    });
+
+    // 监听搜索输入
+    searchInput.addEventListener('input', doSearch);
+
+    function doSearch() {
+        const keyword = searchInput.value.trim().toLowerCase();
+        
+        // 【核心安全策略】：未搜索时显示占位符，保护数据
+        if (!keyword) {
+            resultsList.innerHTML = `
+                <div class="intro-screen">
+                    <i>🛡️</i><p>为了保护数据资产，请在上方输入关键词开始检索</p>
+                </div>`;
+            document.getElementById('resultCount').innerText = "";
+            return;
+        }
+
+        // 1. 作品-人物关联矩阵引擎
+        let searchKeywords = [keyword];
+        for (let work in relationMap) {
+            const roles = relationMap[work].map(r => r.toLowerCase());
+            const workLower = work.toLowerCase();
+            
+            // 如果用户搜作品，关联角色；如果搜角色，关联作品
+            if (keyword.includes(workLower) || roles.some(r => keyword.includes(r))) {
+                searchKeywords.push(workLower, ...roles);
+            }
+        }
+        // 去重
+        searchKeywords = [...new Set(searchKeywords)];
+
+        // 2. 过滤数据
+        let filtered = database.filter(item => {
+            const title = item[1].toLowerCase();
+            const year = item[0].toLowerCase();
+            
+            // A. 大类过滤 (通过 getAutoTags 动态判断该记录的所属大类)
+            if (currentCategory !== 'all') {
+                const tags = getAutoTags(item[1]);
+                if (tags.main !== currentCategory) return false;
+            }
+
+            // B. 关联关键词过滤
+            return searchKeywords.some(key => title.includes(key) || year.includes(key));
+        });
+
+        renderResults(filtered, searchKeywords);
+    }
+
+    function renderResults(data, searchKeywords) {
+        document.getElementById('resultCount').innerText = `找到 ${data.length} 条相关结果`;
+        
+        if (data.length === 0) {
+            resultsList.innerHTML = '<div class="intro-screen"><i>😶</i><p>当前分类下暂无匹配结果，请尝试其他关键词</p></div>';
+            return;
+        }
+
+        const displayData = data.slice(0, 300); // 性能保护机制
+        
+        resultsList.innerHTML = displayData.map(item => {
+            const tags = getAutoTags(item[1]);
+            
+            // 多关键词高亮 (匹配原词和关联词)
+            let highlightedTitle = item[1];
+            searchKeywords.forEach(kw => {
+                if(kw) highlightedTitle = highlightedTitle.replace(new RegExp(`(${kw})`, 'gi'), '<mark>$1</mark>');
+            });
+            
+            return `
+                <div class="card">
+                    <div class="card-title">${highlightedTitle}</div>
+                    <div class="meta">
+                        <span class="badge badge-main">${tags.main}</span>
+                        <span class="badge badge-sub">${tags.sub}</span>
+                        <span class="year-tag">🕒 ${item[0]}</span>
+                    </div>
+                </div>
+            `;
+        }).join('') + (data.length > 300 ? '<p style="text-align:center; color:#999; font-size:12px; margin-top:15px;">为保证流畅度，仅展示前300条，请增加搜索词以精确查找...</p>' : '');
+    }
 
     initDatabase();
 </script>
